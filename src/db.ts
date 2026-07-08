@@ -7,6 +7,7 @@ export interface Company {
   id: number;
   name: string;
   urls: string;       // comma-separated if multiple pages
+  job_url: string | null;
   job_ad: string;
   infrastructure: string | null;
   cold_email: string | null;
@@ -25,6 +26,7 @@ db.exec(`
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     name        TEXT NOT NULL,
     urls        TEXT NOT NULL,
+    job_url     TEXT,
     job_ad      TEXT NOT NULL DEFAULT '',
     infrastructure TEXT,
     cold_email  TEXT,
@@ -81,6 +83,38 @@ export function getSummary() {
     FROM companies
     GROUP BY status
   `).all();
+}
+
+// ─── Discovery types and functions ───────────────────────────────────────────
+
+export interface DiscoveredJob {
+  company_name: string;
+  job_url: string;
+  url: string;      // company homepage, products page, or job board profile as fallback
+  job_ad: string;
+}
+
+/** Returns true if this exact job URL is already in the DB */
+export function jobUrlExists(job_url: string): boolean {
+  const row = db.prepare(`
+    SELECT id FROM companies WHERE job_url = ? LIMIT 1
+  `).get(job_url);
+  return !!row;
+}
+
+/**
+ * Inserts a discovered job as a new pending row.
+ * Returns true if inserted, false if the job_url already existed (deduplication).
+ */
+export function insertDiscoveredJob(job: DiscoveredJob): boolean {
+  if (job.job_url && jobUrlExists(job.job_url)) return false;
+
+  db.prepare(`
+    INSERT INTO companies (name, urls, job_url, job_ad, status)
+    VALUES (?, ?, ?, ?, 'pending')
+  `).run(job.company_name, job.url, job.job_url ?? null, job.job_ad);
+
+  return true;
 }
 
 export default db;

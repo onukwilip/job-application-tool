@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "import": "tsx src/import.ts",
+    "migrate": "tsx src/migrate.ts",
+    "discover": "tsx src/discover.ts",
     "start": "tsx src/index.ts"
   },
   "keywords": [],
