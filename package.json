@@ -6,8 +6,10 @@
   "scripts": {
     "import": "tsx src/import.ts",
     "migrate": "tsx src/migrate.ts",
+    "migrate-outreach": "tsx src/migrate-outreach.ts",
     "discover": "tsx src/discover.ts",
-    "email": "tsx src/generate_email.ts"
+    "gen-email": "tsx src/generate-email.ts",
+    "get-email": "tsx src/get-email.ts"
   },
   "keywords": [],
   "author": "",

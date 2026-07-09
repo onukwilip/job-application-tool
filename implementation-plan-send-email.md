@@ -1,0 +1,387 @@
+# Implementation Plan — Email Sending (Simplified)
+
+No pixel tracker. Plain text only. One attachment. Exact [Name] replacement.
+
+---
+
+## What changes from the full plan
+
+| Full plan | This plan |
+|---|---|
+| HTML + plain text (dual body) | Plain text only |
+| Pixel tracker server | Removed entirely |
+| uuid dependency | Removed |
+| opened_at in sends table | Removed |
+| Case-insensitive name replacement | Exact `[Name]` match only |
+
+---
+
+## New files
+
+```
+cold-email-automator/
+├── src/
+│   ├── send-email.ts     ← NEW
+│   └── migrate-sends.ts  ← NEW (run once)
+└── .env                  ← UPDATE
+```
+
+No tracker, no Dockerfile, no ngrok.
+
+---
+
+## Step 1: Install dependencies
+
+```bash
+npm install nodemailer
+npm install -D @types/nodemailer
+```
+
+No uuid needed.
+
+---
+
+## Step 2: Gmail App Password (one-time setup)
+
+1. Google Account → **Security** → enable 2-Step Verification
+2. **Security → App Passwords** → create one (name it anything)
+3. Copy the 16-character password — visible only once
+
+---
+
+## Step 3: Update .env
+
+```env
+# Gmail SMTP
+GMAIL_USER=your.email@gmail.com
+GMAIL_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+
+# Resume or portfolio PDF to attach (relative to project root)
+ATTACHMENT_PATH=resume.pdf
+
+# Max emails to send per run (prevents accidental bulk sends)
+SEND_LIMIT=10
+```
+
+---
+
+## Step 4: src/migrate-sends.ts
+
+Run once. Records who was emailed to prevent re-sending on the next run.
+
+```typescript
+import 'dotenv/config';
+import Database from 'better-sqlite3';
+import path from 'path';
+
+const db = new Database(path.join(process.cwd(), 'data', 'companies.db'));
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sends (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id  INTEGER NOT NULL,
+    email       TEXT NOT NULL,
+    name        TEXT NOT NULL,
+    sent_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(company_id, email),
+    FOREIGN KEY (company_id) REFERENCES companies(id)
+  )
+`);
+
+console.log('sends table ready.');
+db.close();
+```
+
+---
+
+## Step 5: New db.ts functions (append to bottom)
+
+```typescript
+// ─── Sends table ─────────────────────────────────────────────────────────────
+
+export interface Send {
+  id: number;
+  company_id: number;
+  email: string;
+  name: string;
+  sent_at: string;
+}
+
+/**
+ * Returns companies that:
+ * - Have a generated cold email (status = 'done')
+ * - Have outreach contacts with emails (outreach_status = 'done')
+ * - Have NOT been emailed yet (no row in sends table)
+ */
+export function getCompaniesReadyToSend(): Company[] {
+  return db.prepare(`
+    SELECT * FROM companies
+    WHERE status = 'done'
+    AND outreach_status = 'done'
+    AND outreach IS NOT NULL
+    AND id NOT IN (SELECT DISTINCT company_id FROM sends)
+    ORDER BY id ASC
+  `).all() as Company[];
+}
+
+/** Record a sent email. Silently skips if already sent (UNIQUE constraint). */
+export function recordSend(companyId: number, email: string, name: string): void {
+  db.prepare(`
+    INSERT OR IGNORE INTO sends (company_id, email, name)
+    VALUES (?, ?, ?)
+  `).run(companyId, email, name);
+}
+
+/** Get full send history */
+export function getSends(): Send[] {
+  return db.prepare(`
+    SELECT s.*, c.name as company_name
+    FROM sends s
+    JOIN companies c ON c.id = s.company_id
+    ORDER BY s.sent_at DESC
+  `).all() as Send[];
+}
+```
+
+---
+
+## Step 6: src/send-email.ts
+
+```typescript
+import 'dotenv/config';
+import nodemailer from 'nodemailer';
+import path from 'path';
+import fs from 'fs';
+import {
+  getCompaniesReadyToSend,
+  recordSend,
+  getSummary,
+  type Company,
+  type DecisionMaker,
+} from './db.js';
+
+// ─── Config ───────────────────────────────────────────────────────────────────
+
+const GMAIL_USER      = process.env.GMAIL_USER!;
+const GMAIL_APP_PASS  = process.env.GMAIL_APP_PASSWORD!;
+const ATTACHMENT_PATH = process.env.ATTACHMENT_PATH
+  ? path.resolve(process.cwd(), process.env.ATTACHMENT_PATH)
+  : null;
+const SEND_LIMIT      = process.env.SEND_LIMIT
+  ? parseInt(process.env.SEND_LIMIT, 10)
+  : undefined;
+
+// 3 seconds between emails — stays well within Gmail's 500/day SMTP limit
+const SEND_DELAY_MS = 3000;
+
+const transporter = nodemailer.createTransport({
+  host:   'smtp.gmail.com',
+  port:   587,
+  secure: false,  // STARTTLS
+  auth: {
+    user: GMAIL_USER,
+    pass: GMAIL_APP_PASS,
+  },
+});
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+function firstNameOf(fullName: string): string {
+  return fullName.trim().split(/\s+/)[0] ?? fullName;
+}
+
+/**
+ * Replaces [Name] in the email body with the recipient's first name.
+ * Matches ONLY the exact string [Name] — capital N, with square brackets.
+ * Does NOT match [name], [NAME], or the word "name" appearing elsewhere.
+ */
+function personalize(coldEmail: string, firstName: string): string {
+  return coldEmail.replace(/\[Name\]/g, firstName);
+}
+
+// ─── Send one email ───────────────────────────────────────────────────────────
+
+async function sendToRecipient(
+  company: Company,
+  person: DecisionMaker
+): Promise<boolean> {
+  const recipientEmail = person.emails[0];
+  if (!recipientEmail) return false;
+
+  const firstName      = firstNameOf(person.name);
+  const personalizedBody = personalize(company.cold_email ?? '', firstName);
+  const subject        = `Engineering 99.9% reliability for ${company.name} Cloud infrastructure`;
+
+  const mailOptions: Parameters<typeof transporter.sendMail>[0] = {
+    from:    `Prince Onukwili <${GMAIL_USER}>`,
+    to:      `${person.name} <${recipientEmail}>`,
+    subject,
+    text:    personalizedBody,
+  };
+
+  // Attach file if configured and it exists
+  if (ATTACHMENT_PATH) {
+    if (!fs.existsSync(ATTACHMENT_PATH)) {
+      console.warn(`  ⚠ Attachment not found at ${ATTACHMENT_PATH} — sending without attachment`);
+    } else {
+      mailOptions.attachments = [
+        {
+          path:     ATTACHMENT_PATH,
+          filename: path.basename(ATTACHMENT_PATH),
+        },
+      ];
+    }
+  }
+
+  try {
+    await transporter.sendMail(mailOptions);
+    recordSend(company.id, recipientEmail, person.name);
+    console.log(`  ✓ Sent to ${person.name} <${recipientEmail}>`);
+    return true;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`  ✗ Failed → ${person.name} <${recipientEmail}>: ${msg}`);
+    return false;
+  }
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
+async function main() {
+  console.log('Starting email send run...');
+  console.log(`From:       ${GMAIL_USER}`);
+  console.log(`Attachment: ${ATTACHMENT_PATH ?? 'none'}`);
+  console.log(`Send limit: ${SEND_LIMIT ?? 'unlimited'}\n`);
+
+  // Verify SMTP credentials before doing anything
+  try {
+    await transporter.verify();
+    console.log('Gmail SMTP connection verified ✓\n');
+  } catch (err) {
+    console.error('Gmail SMTP failed — check GMAIL_USER and GMAIL_APP_PASSWORD in .env');
+    console.error(err);
+    process.exit(1);
+  }
+
+  const allCompanies = getCompaniesReadyToSend();
+  const companies    = SEND_LIMIT
+    ? allCompanies.slice(0, SEND_LIMIT)
+    : allCompanies;
+
+  console.log(`Companies ready to send: ${allCompanies.length} | This run: ${companies.length}`);
+
+  let totalSent = 0;
+
+  for (const company of companies) {
+    if (!company.cold_email || !company.outreach) continue;
+
+    let people: DecisionMaker[] = [];
+    try {
+      people = JSON.parse(company.outreach) as DecisionMaker[];
+    } catch {
+      console.warn(`Skipping ${company.name} — could not parse outreach JSON`);
+      continue;
+    }
+
+    const recipients = people.filter(p => p.emails.length > 0 && p.emails[0]);
+    if (recipients.length === 0) {
+      console.log(`Skipping ${company.name} — no email addresses in outreach`);
+      continue;
+    }
+
+    console.log(`\n[SEND] ${company.name} — ${recipients.length} recipient(s)`);
+
+    for (const person of recipients) {
+      const sent = await sendToRecipient(company, person);
+      if (sent) totalSent++;
+      await sleep(SEND_DELAY_MS);
+    }
+  }
+
+  console.log(`\n=== Done. Sent ${totalSent} email(s) this run. ===`);
+  console.table(getSummary());
+}
+
+main().catch(console.error);
+```
+
+---
+
+## Step 7: Update package.json
+
+```json
+{
+  "scripts": {
+    "import":           "tsx src/import.ts",
+    "migrate":          "tsx src/migrate.ts",
+    "migrate-outreach": "tsx src/migrate-outreach.ts",
+    "migrate-sends":    "tsx src/migrate-sends.ts",
+    "discover":         "tsx src/discover.ts",
+    "start":            "tsx src/index.ts",
+    "outreach":         "tsx src/outreach.ts",
+    "get-email":        "tsx src/get-email.ts",
+    "send-email":       "tsx src/send-email.ts"
+  }
+}
+```
+
+---
+
+## Step 8: Running it
+
+```bash
+# One-time migration
+npm run migrate-sends
+
+# Send 10 emails this run
+SEND_LIMIT=10 npm run send-email
+
+# Send all ready companies
+npm run send-email
+```
+
+Re-running is always safe. The `UNIQUE(company_id, email)` constraint in
+the sends table means a recipient is never emailed twice, even if you
+run the script multiple times.
+
+---
+
+## What the subject and NAME replacement look like
+
+Given a cold_email containing:
+```
+Hi [Name], I'm Prince, I trust you're great :)
+
+I came across Twingate and wanted to share...
+```
+
+And a recipient with `name: "Fryderyk Wiatrowski"`, the sent email becomes:
+
+**Subject:** `Engineering 99.9% reliability for Twingate Cloud infrastructure`
+
+**Body:**
+```
+Hi Fryderyk, I'm Prince, I trust you're great :)
+
+I came across Twingate and wanted to share...
+```
+
+The regex `/\[Name\]/g` matches only the literal string `[Name]` with
+square brackets and capital N — nothing else in the email body is touched.
+
+---
+
+## To view send history
+
+Open DB Browser and run:
+
+```sql
+SELECT s.name, s.email, c.name as company, s.sent_at
+FROM sends s
+JOIN companies c ON c.id = s.company_id
+ORDER BY s.sent_at DESC;
+```

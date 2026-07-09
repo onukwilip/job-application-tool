@@ -17,3 +17,22 @@ export function applyBold(text: string): string {
   // Replace **any text here** with the Unicode bold equivalent
   return text.replace(/\*\*(.+?)\*\*/g, (_, inner) => toBold(inner));
 }
+
+export function extractDomain(url: string): string {
+  try {
+    const firstUrl = url.split(/[\s,]+/)[0].trim();
+    const withProtocol = firstUrl.startsWith('http')
+      ? firstUrl
+      : `https://${firstUrl}`;
+    const parsed = new URL(withProtocol);
+    return parsed.hostname.replace(/^www\./, '');
+  } catch {
+    // Fallback: strip protocol and www manually
+    return url
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0]
+      .split(',')[0]
+      .trim();
+  }
+}

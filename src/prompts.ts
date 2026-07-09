@@ -262,3 +262,42 @@ Rules:
 - Return [] if no matching jobs are found
 - Do NOT wrap the JSON in markdown fences or add any explanation
 `;
+
+// --- Get Email ---
+
+export function OUTREACH_PROMPT(companyName: string, companyUrl: string): string {
+  return `
+You are a research assistant helping find technical decision makers at a company.
+
+Company: ${companyName}
+Website: ${companyUrl}
+
+Your goal: find the following people at this company:
+- CTO (Chief Technology Officer)
+- VP of Engineering / Vice President of Engineering
+- Head of Engineering / Head of DevOps / Head of Cloud / Head of Infrastructure / Head of Platform
+- Co-Founder or CEO
+
+For each person you find:
+1. Check the company's /about or /team page first
+2. Search Google for "[Company Name] [Title] LinkedIn" to find their LinkedIn profile URL
+3. Look for their personal and company email address on GitHub profiles, speaker bios, personal websites, or contact pages, and the web in general
+
+Return ONLY a valid JSON array. No markdown, no code blocks, no explanation, no text before or after.
+
+Each object must have exactly these four keys:
+[
+  {
+    "name": "string — full name, e.g. Jane Smith",
+    "title": "string — their exact role",
+    "linkedin": "string — full LinkedIn URL, or null if not found",
+    "email": "string — email address if found, or null if not found"
+  }
+]
+
+Rules:
+- Only include people you actually found evidence for — do not guess or invent names
+- Return [] if you cannot find any relevant people at this company
+- Do NOT wrap JSON in markdown fences
+`;
+}

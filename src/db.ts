@@ -12,6 +12,8 @@ export interface Company {
   infrastructure: string | null;
   cold_email: string | null;
   status: CompanyStatus;
+  outreach: string | null;         // JSON string
+  outreach_status: string | null;  // null | 'done' | 'failed'
   error: string | null;
   created_at: string;
   updated_at: string;
@@ -30,6 +32,8 @@ db.exec(`
     job_ad      TEXT NOT NULL DEFAULT '',
     infrastructure TEXT,
     cold_email  TEXT,
+    outreach    TEXT,
+    outreach_status TEXT,
     status      TEXT NOT NULL DEFAULT 'pending',
     error       TEXT,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
@@ -85,6 +89,15 @@ export function getSummary() {
   `).all();
 }
 
+// ─── Outreach types and functions ────────────────────────────────────────────
+
+export interface DecisionMaker {
+  name: string;
+  title: string;
+  linkedin: string | null;
+  emails: string[];
+}
+
 // ─── Discovery types and functions ───────────────────────────────────────────
 
 export interface DiscoveredJob {
@@ -115,6 +128,34 @@ export function insertDiscoveredJob(job: DiscoveredJob): boolean {
   `).run(job.company_name, job.url, job.job_url ?? null, job.job_ad);
 
   return true;
+}
+
+/** Returns companies with cold emails generated that have not yet been outreach-researched */
+export function getCompaniesForOutreach(): Company[] {
+  return db.prepare(`
+    SELECT * FROM companies
+    WHERE status = 'done'
+    AND (outreach_status IS NULL OR outreach_status = 'failed')
+    ORDER BY id ASC
+  `).all() as Company[];
+}
+
+/** Saves the array of decision makers as JSON and marks outreach as done */
+export function updateOutreach(id: number, people: DecisionMaker[]): void {
+  db.prepare(`
+    UPDATE companies
+    SET outreach = ?, outreach_status = 'done', updated_at = datetime('now')
+    WHERE id = ?
+  `).run(JSON.stringify(people), id);
+}
+
+/** Marks outreach research as failed for this company */
+export function markOutreachFailed(id: number, error: string): void {
+  db.prepare(`
+    UPDATE companies
+    SET outreach_status = 'failed', error = ?, updated_at = datetime('now')
+    WHERE id = ?
+  `).run(error, id);
 }
 
 export default db;
