@@ -27,7 +27,7 @@ Return a structured summary covering:
 export const YOUR_BACKGROUND = `
 My background and achievements as a Senior DevOps and Platform Engineer:
 
-[PLATFORM AND CLOUD ENGINEERING]
+[PLATFORM, SRE, AND CLOUD ENGINEERING]
 - Engineered a highly-available CockroachDB cluster on GKE handling 50k+ blocks/hour (7.5M+ Ethereum transactions/hour) for days in a row, while simultaneously serving normal user traffic
 - Engineered a platform on GKE sustaining 160k+ requests/hour (~3.8M+/day) and 10k+ PostgreSQL transactions/hour with 99.99% availability
 - Sustained 80-100% DDoS block rate on a simulated attack while keeping 100% success on real user traffic
@@ -58,7 +58,7 @@ We'd [proposed implementation using 1-2 specific cloud services]
 I've [done this before / proven this / implemented this exact pattern before]. [One sentence proof with concrete numbers from my background.]
 
 ---
-[REPEAT FOR 3-6 POINTS]
+[REPEAT FOR 3-4 POINTS]
 ---
 
 I can't cover everything here, but I'd love to connect on a call or interview.
@@ -73,62 +73,74 @@ By the way, here're some highlights of my previous experience in the DevOps, Pla
 [SECURITY & DEVSECOPS]
 • [stat-heavy bullet]
 
-[LEARN MORE...]
-LinkedIn: https://www.linkedin.com/in/prince-onukwili-a82143233
-`;
-
-export const EXAMPLE_COLD_EMAIL = `
-**Interest in joining COMPANY's team as a DevOps and Platform Engineer**
-
-You can learn more about how my experience can benefit COMPANY from **my LinkedIn and resume are added below**
-https://www.linkedin.com/in/prince-onukwili-a82143233/
-
-Hi NAME...I came across COMPANY and wanted to **share my thoughts on how your X platform's cloud infrastructure could be architected**
-Here's where my experience fits...
-
----
-
-• **Protect COMPANY's X service from DDoS attacks and known Common Vulnerabilities and Exploits**, so customers' requests are never blocked by an attack
-
-We'd deploy Cloudflare's Web Application Firewall and DDoS protection in front of the public load balancers serving the Connector endpoints,
-
-This way, **attack traffic gets filtered at the edge before it ever reaches your infrastructure.**
-
-I've proven this before.
-**I sustained an 80-100% block rate on a simulated DDoS attack while keeping a 100% success rate on real user traffic** (without real-user requests being dropped)
-
----
-
-• **Ensure 99.9% availability and low-latency access for COMPANY's X service**, even if an entire cloud zone or region experiences an outage
-
-We'd run multiple instances of every X service across multiple availability zones on the Kubernetes Cluster(s), GKE or EKS.
-
-This way, **a single zone or VM failure never takes the X service offline for customers who need it**
-
-I've proven this kind of reliability before.
-I engineered a platform on Google Kubernetes Engine that **sustained 99.99% availability while handling 160,000+ requests per hour (roughly 3.8 million a day)**
-
-In another project, I also engineered a highly available **CockroachDB cluster handling 7.5+ million transactions per hour**, both while serving everyday user traffic
-
----
-
-• **Optimise COMPANY's cloud infrastructure costs across AWS and(or) GCP**, so growth doesn't cause you to break the bank on Cloud costs
-
-We'd schedule staging workloads on AWS Spot Instances or GCP Preemptible VMs, since they don't need guaranteed uptime
-
-We'd also engineer production workloads on AWS Reserved Instances or GCP Committed Use Discounts, **getting ~50 - 60% discounts.**
-
-I've done this before. 
-**I reduced a platform's monthly cloud spend from about $11,500 to $7,500 a month** by right-sizing resources and routing container logs properly.
-
--------------------------------------------------------------
-
-I can't cover everything here...but I'd love to connect on a call or interview, **where I can share a detailed architectural diagram of the proposed Cloud infrastructure**
+I can't cover everything here...but I'd love to connect on a call or interview, **where I can share a detailed architectural diagram of the proposed infrastructure improvements** for the Cloud infrastructure 
 
 [LEARN MORE...]
 
 **You can learn more about my experience in detail**, my projects and their case studies from my LinkedIn
-https://www.linkedin.com/in/prince-onukwuli-a82143233
+https://www.linkedin.com/in/prince-onukwili-a82143233/
+`;
+
+export const EXAMPLE_COLD_EMAIL = `
+**Interest in joining COMPANY's team as a DevOps and Platform Engineer** 
+
+(You can learn more about **how my experience can benefit COMPANY from my LinkedIn and resume below**
+https://www.linkedin.com/in/prince-onukwili-a82143233/)
+
+• **What if COMPANY monthly Cloud infrastructure costs reduced by 20% - 35% in the next 30 days**, without affecting its services reliability?
+
+• **What if COMPANY could acquire SOC 2 compliance within the next 6 months** (if not currently certified), proving the security of its infrastructure and customers data?
+
+• **What if COMPANY X and Y apps could achieve 99.9% availability** and low-latency, while handling MILLIONS of customers **within the next 30 days?**
+
+Hi NAME...I'm Prince, I studied COMPANY services and **here're some ways I propose the Cloud infrastructure could be architected and improved to achieve the results above**
+
+---
+
+• We'd deploy Cloudflare's Web Application Firewall and DDoS protection in front of the public load balancers serving the Connector endpoints,
+
+This way, **attack traffic gets filtered at the edge before it ever reaches your infrastructure.**
+
+I've proven this before. **Engineered an infra on GKE Kubernetes that sustained an 80-100% block rate on a simulated DDoS attack while keeping a 100% success rate on real user traffic** (without real-user requests being dropped)
+
+---
+
+• We'd schedule staging workloads on AWS Spot Instances or GCP Preemptible VMs, since they don't need guaranteed uptime
+
+We'd also **engineer production workloads on AWS Reserved Instances or GCP Committed Use Discounts, getting ~50 - 60% discounts.**
+
+I've done this before. I **reduced a platform's monthly cloud spend from about $11,500 to $7,500 a month** by right-sizing resources and routing container logs properly.
+
+---
+
+• We'd run multiple instances of every X service across multiple availability zones on the Kubernetes Cluster(s), GKE or EKS.
+
+This way, **a single zone or VM failure never takes the X service offline for customers who need it**
+
+I've proven this kind of reliability before. **I engineered a platform on Google Kubernetes Engine that sustained 99.99% availability while handling 160,000+ requests per hour** (equivalent to 3.8 million a day)
+
+In another project, I also **engineered a highly available CockroachDB cluster handling 7.5+ million transactions per hour**, both while serving everyday user traffic
+
+---
+
+• We'd manage COMPANY's Public and Private Key Infrastructure using Google Certificate Authority Service, issuing TLS certificates across every Kubernetes service
+
+This way, **all data in transit stays encrypted, one of the core areas SOC 2 auditors check for.**
+
+I've implemented this exact pattern before. 
+**I ran a self-managed internal CA distributed through cert-manager. Also, securing service-to-service traffic with mutual TLS using Istio** 
+
+I also **deployed Falco for runtime threat detection**, 
+monitoring every running container for malicious behaviour and **alerting the team via Slack.**
+
+-------------------------------------------------------
+
+I can't cover everything here...but I'd love to connect on a call or interview, **where I can share a detailed architectural diagram of the proposed infrastructure improvements** for the Cloud infrastructure 
+
+[LEARN MORE...]
+
+**You can learn more about my experience in detail**, my projects and their case studies from my LinkedIn
+https://www.linkedin.com/in/prince-onukwili-a82143233/
 `;
 
 export const POINTS_TO_USE = `
@@ -142,9 +154,6 @@ You are helping Prince Onukwili, a Senior DevOps and Platform Engineer, write a 
 
 Here is Prince's background:
 ${YOUR_BACKGROUND}
-
-Here is the email format to follow EXACTLY:
-${EMAIL_FORMAT_EXAMPLE}
 
 Here is a real example of a finished cold email to follow EXACTLY for format and tone:
 ${EXAMPLE_COLD_EMAIL}
@@ -171,15 +180,15 @@ Plain text rules (this is pasted directly into Gmail/LinkedIn, not rendered as m
 Instructions:
 - Replace COMPANY with the actual company name
 - Replace X and Y with the actual product or system names from the company's platform (shared below)
-- Write 3-6 bullet points, each tied to a specific named system or product from this company
+- Write 3-4 bullet points, each tied to a specific named system or product from this company
 - Start each bullet with an action verb + the specific company system + result
 - Each "We'd" paragraph should name 1-2 specific cloud services
 - Each proof line should reference a real achievement from Prince's background with concrete numbers
 - Do NOT reuse the same proof point stat in two different bullets
 - Keep the language simple, no jargon, straight to the point
 - No em dashes, use commas, brackets, or ellipses instead
-- Follow the format examples above precisely, including the highlights section at the bottom
-- Don't change or modify the content which are not in placeholders, keep as is. Only change the COMPANY, X, and Y placeholders
+- Follow the EXACT format examples above precisely, including the highlights section at the bottom
+- Don't change or modify the content which are not in placeholders, KEEP AS IS. Only change the COMPANY, X, and Y placeholders
 - Don't add unneccessary phrases and clauses to the points
 - Keep it simple, just like the example email above
 
@@ -299,5 +308,126 @@ Rules:
 - Only include people you actually found evidence for — do not guess or invent names
 - Return [] if you cannot find any relevant people at this company
 - Do NOT wrap JSON in markdown fences
+`;
+}
+
+export function APPLY_PROMPT(APPLICANT: any, jobUrl: string, coverLetterBody: string): string {
+  return `
+You are submitting a job application on behalf of ${APPLICANT.firstName} ${APPLICANT.lastName}.
+
+Visit this URL and complete the application form:
+${jobUrl}
+
+════════════════════════════════════════
+PERSONAL DETAILS — use EXACTLY these values
+════════════════════════════════════════
+First name:    ${APPLICANT.firstName}
+Last name:     ${APPLICANT.lastName}
+Full name:     ${APPLICANT.firstName} ${APPLICANT.lastName}
+Email:         ${APPLICANT.email}
+Phone:         ${APPLICANT.phone}
+City:          ${APPLICANT.city}
+Country:       ${APPLICANT.country}
+LinkedIn URL:  ${APPLICANT.linkedin}
+Website URL:   ${APPLICANT.website}
+Portfolio:     ${APPLICANT.linkedin}
+
+════════════════════════════════════════
+RESUME / CV
+════════════════════════════════════════
+Download this file and upload it as the resume or CV attachment:
+${APPLICANT.resumeUrl}
+
+════════════════════════════════════════
+COVER LETTER
+════════════════════════════════════════
+If the form has a cover letter text field, paste this text exactly:
+
+${coverLetterBody}
+
+If the form has a cover letter FILE upload instead of a text field,
+create a plain text file with the above content and upload it.
+
+════════════════════════════════════════
+STANDARD ANSWERS FOR SPECIFIC FIELDS
+════════════════════════════════════════
+
+Gender:
+→ Select "${APPLICANT.gender}" or the closest available option
+
+Race / Ethnicity:
+→ Select "Decline to self-identify" or "I prefer not to answer"
+  or the equivalent option. If that option does not exist, select "Other".
+
+Veteran status:
+→ Select "I am not a veteran" or "Decline to self-identify" or "No"
+
+Disability status:
+→ Select "No, I don't have a disability" or "Decline to self-identify"
+
+Work authorization questions — answer ALL of these as YES:
+→ "Are you authorized to work in [any country]?"       → YES / Yes
+→ "Do you require visa sponsorship?"                   → YES / Yes
+→ "Will you in the future require visa sponsorship?"   → YES / Yes
+→ "Are you legally authorized to work in [country]?"   → YES / Yes
+→ "Are you authorized to work where you reside?"       → YES / Yes
+
+Salary / compensation:
+→ If a single number is required: ${APPLICANT.salary}
+→ If a range is required: ${APPLICANT.salaryMin} to ${APPLICANT.salaryMax}
+→ If a currency selector appears: choose USD
+
+"How did you hear about us?" / "Referral source":
+→ Select "LinkedIn" if available, otherwise "Online" or "Job board"
+
+Years of experience:
+→ If required, enter ${APPLICANT.yearsExperience}
+
+Location / remote preference:
+→ If asked whether you want remote: select "Remote" or "Yes"
+→ If asked for preferred location: enter "Remote — Lagos, Nigeria"
+
+HANDLING CAPTCHA:
+
+If a CAPTCHA challenge appears at any point:
+- Do NOT stop. Attempt to solve it by clicking the correct images or elements.
+- For image grid challenges, carefully select all matching images.
+- After solving, continue with the submission.
+- Only report failure if the CAPTCHA is re-shown after multiple solve attempts.
+
+════════════════════════════════════════
+SUBMISSION
+════════════════════════════════════════
+After filling ALL fields, click the final Submit button.
+
+If the form requires creating an account BEFORE showing the application:
+→ Do NOT create an account. Stop and report failure.
+
+If a required field has no suitable answer from the information above:
+→ Leave it blank if the form allows it.
+→ If the field is mandatory and you have no value, report it in issues.
+
+════════════════════════════════════════
+RETURN FORMAT
+════════════════════════════════════════
+Return ONLY a valid JSON object — no markdown, no explanation:
+
+{
+  "success": true or false,
+  "message": "one sentence describing what happened",
+  "fields_filled": ["list of field names you filled in"],
+  "issues": ["any fields you could not fill or problems encountered"],
+  "submitted_url": "the URL where the form was on final submission"
+}
+
+HUMAN BEHAVIOUR SIMULATION — follow these for every action:
+- Before clicking any field: move the mouse to it naturally and pause 1-2 seconds
+- When typing into a text field: pause 0.5-1 second after clicking it before typing,
+  then type at a natural pace (not instantly)
+- After completing each field: pause 1-2 seconds before moving to the next
+- Before clicking Submit: scroll down to review the form, then hover over 
+  the Submit button for 2 seconds before clicking
+- After any CAPTCHA appears: pause 3 seconds, then attempt to solve it carefully,
+  then wait 3 more seconds before any next action
 `;
 }

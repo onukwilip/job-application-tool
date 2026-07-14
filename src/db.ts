@@ -14,6 +14,9 @@ export interface Company {
   status: CompanyStatus;
   outreach: string | null;         // JSON string
   outreach_status: string | null;  // null | 'done' | 'failed'
+  applied_status: string | null;   // null | 'done' | 'failed' | 'skipped'
+  applied_at: string | null;
+  applied_error: string | null;
   error: string | null;
   created_at: string;
   updated_at: string;
@@ -34,6 +37,9 @@ db.exec(`
     cold_email  TEXT,
     outreach    TEXT,
     outreach_status TEXT,
+    applied_status TEXT,
+    applied_at  TEXT,
+    applied_error TEXT,
     status      TEXT NOT NULL DEFAULT 'pending',
     error       TEXT,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
@@ -156,6 +162,106 @@ export function markOutreachFailed(id: number, error: string): void {
     SET outreach_status = 'failed', error = ?, updated_at = datetime('now')
     WHERE id = ?
   `).run(error, id);
+}
+
+// ─── Sends table ─────────────────────────────────────────────────────────────
+
+export interface Send {
+  id: number;
+  company_id: number;
+  email: string;
+  name: string;
+  sent_at: string;
+}
+
+/**
+ * Returns companies that:
+ * - Have a generated cold email (status = 'done')
+ * - Have outreach contacts with emails (outreach_status = 'done')
+ * - Have NOT been emailed yet (no row in sends table)
+ */
+export function getCompaniesReadyToSend(): Company[] {
+  return db.prepare(`
+    SELECT * FROM companies
+    WHERE status = 'done'
+    AND outreach_status = 'done'
+    AND outreach IS NOT NULL
+    AND id NOT IN (SELECT DISTINCT company_id FROM sends)
+    ORDER BY id ASC
+  `).all() as Company[];
+}
+
+/** Record a sent email. Silently skips if already sent (UNIQUE constraint). */
+export function recordSend(companyId: number, email: string, name: string): void {
+  db.prepare(`
+    INSERT OR IGNORE INTO sends (company_id, email, name)
+    VALUES (?, ?, ?)
+  `).run(companyId, email, name);
+}
+
+/** Get full send history */
+export function getSends(): Send[] {
+  return db.prepare(`
+    SELECT s.*, c.name as company_name
+    FROM sends s
+    JOIN companies c ON c.id = s.company_id
+    ORDER BY s.sent_at DESC
+  `).all() as Send[];
+}
+
+// ─── Application tracking ─────────────────────────────────────────────────────
+
+/**
+ * Returns companies that:
+ * - Have a cold email generated (status = 'done')
+ * - Have a job_url to apply to
+ * - Have NOT been successfully applied to yet
+ */
+export function getCompaniesReadyToApply(): Company[] {
+  return db.prepare(`
+    SELECT * FROM companies
+    WHERE status = 'done'
+    AND job_url IS NOT NULL
+    AND (applied_status IS NULL OR applied_status = 'failed')
+    ORDER BY id ASC
+  `).all() as Company[];
+}
+
+export function markApplied(id: number): void {
+  db.prepare(`
+    UPDATE companies
+    SET applied_status = 'done', applied_at = datetime('now'),
+        applied_error = NULL, updated_at = datetime('now')
+    WHERE id = ?
+  `).run(id);
+}
+
+export function markApplyFailed(id: number, error: string): void {
+  db.prepare(`
+    UPDATE companies
+    SET applied_status = 'failed', applied_error = ?,
+        updated_at = datetime('now')
+    WHERE id = ?
+  `).run(error, id);
+}
+
+export function markApplySkipped(id: number, reason: string): void {
+  db.prepare(`
+    UPDATE companies
+    SET applied_status = 'skipped', applied_error = ?,
+        updated_at = datetime('now')
+    WHERE id = ?
+  `).run(reason, id);
+}
+
+/** Breakdown of applied_status among companies that have a job_url */
+export function getApplyStats() {
+  return db.prepare(`
+    SELECT applied_status, COUNT(*) as count
+    FROM companies
+    WHERE job_url IS NOT NULL
+    GROUP BY applied_status
+  `).all();
 }
 
 export default db;

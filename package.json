@@ -6,10 +6,15 @@
   "scripts": {
     "import": "tsx src/import.ts",
     "migrate": "tsx src/migrate.ts",
+    "migrate-sends": "tsx src/migrate-sends.ts",
+    "migrate-apply": "tsx src/migrate-apply.ts",
+    "reset-skipped-applies": "tsx src/reset-skipped-applies.ts",
     "migrate-outreach": "tsx src/migrate-outreach.ts",
     "discover": "tsx src/discover.ts",
     "gen-email": "tsx src/generate-email.ts",
-    "get-email": "tsx src/get-email.ts"
+    "get-email": "tsx src/get-email.ts",
+    "send-email": "tsx src/send-email.ts",
+    "apply": "tsx src/apply.ts"
   },
   "keywords": [],
   "author": "",
@@ -20,12 +25,15 @@
     "better-sqlite3": "^12.11.1",
     "browser-use-sdk": "^3.8.4",
     "dotenv": "^17.4.2",
+    "node-capsolver": "^1.2.0",
+    "nodemailer": "^9.0.3",
     "p-limit": "^7.3.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^26.1.0",
+    "@types/nodemailer": "^8.0.1",
     "tsx": "^4.23.0",
     "typescript": "^6.0.3"
   }
