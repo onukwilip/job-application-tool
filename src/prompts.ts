@@ -144,10 +144,24 @@ https://www.linkedin.com/in/prince-onukwili-a82143233/
 `;
 
 export const POINTS_TO_USE = `
-* Protecting the infra from malicious attacks, DDoS, and known Common Vulnerabilities and Exploits using Cloudflare Web Application Firewall and DDoS protection. Shield the public Load balancers which serves traffic using Cloudflare <Highlighting the DDoS simulation achievement>
-* Engineer the infra setup to ensure 99.9% availability and low-latency of critical and customer-facing apps. Running multiple instances of apps across multiple VMs across availability zones, to ensure high-availability, and prevent critical apps from going down due to single-node or cloud zonal failure <Highlighting how I ensured 99.99% availability of my microservices and DB, under a load of 160k+ reqs/hr, ~3.8M+ reqs/day AND the highly-available CockroachDB cluster that handled 7.5M+ Ethereum transactions/hour, while handling everyday user traffic>
-* Optimize Cloud infrastructure costs across AWS and(or) GCP, so growth doesn't cause breaking the bank. Scheduling staging workloads on AWS Spot Instances or GCP Preemptible VMs. Engineering production workloads on AWS Reserved Instances or GCP Committed Use Discounts, getting ~50 - 60% discounts <Highlighting how I reduced a platform's monthly cloud spend from about $11,500 to $7,500 a month by right-sizing resources and routing container logs properly>
+1. DDoS / Security
+   Action: Deploy Cloudflare's Web Application Firewall and DDoS protection in front of the public load balancers serving the company's endpoints. Attack traffic gets filtered at the edge before it ever reaches the infrastructure.
+   Proof: Engineered an infra on GKE Kubernetes that sustained an 80-100% block rate on a simulated DDoS attack while keeping a 100% success rate on real user traffic (without real-user requests being dropped)
+
+2. Cost optimization
+   Action: Schedule staging/non-critical workloads on AWS Spot Instances or GCP Preemptible VMs. Engineer production workloads on AWS Reserved Instances or GCP Committed Use Discounts, getting ~50-60% discounts.
+   Proof: Reduced a platform's monthly cloud spend from about $11,500 to $7,500 a month by right-sizing resources and routing container logs properly.
+
+3. High availability
+   Action: Run multiple instances of every critical service across multiple availability zones on the Kubernetes cluster(s), GKE or EKS. A single zone or VM failure never takes the service offline for customers.
+   Proof 1: Engineered a platform on Google Kubernetes Engine that sustained 99.99% availability while handling 160,000+ requests per hour (equivalent to 3.8 million a day)
+   Proof 2: Engineered a highly available CockroachDB cluster handling 7.5+ million transactions per hour, both while serving everyday user traffic
+
+4. SOC 2 compliance / PKI / security hardening
+   Action: Manage the company's Public and Private Key Infrastructure using Google Certificate Authority Service, issuing TLS certificates across every Kubernetes service. All data in transit stays encrypted, one of the core areas SOC 2 auditors check for.
+   Proof: Ran a self-managed internal CA distributed through cert-manager, securing service-to-service traffic with mutual TLS using Istio. Also deployed Falco for runtime threat detection, monitoring every running container for malicious behaviour and alerting the team via Slack.
 `;
+
 
 export const EMAIL_GENERATION_PROMPT = (companyResearch: string): string => `
 You are helping Prince Onukwili, a Senior DevOps and Platform Engineer, write a cold outreach email to a company's engineering leadership.
@@ -155,42 +169,105 @@ You are helping Prince Onukwili, a Senior DevOps and Platform Engineer, write a 
 Here is Prince's background:
 ${YOUR_BACKGROUND}
 
-Here is a real example of a finished cold email to follow EXACTLY for format and tone:
+Here is a REAL finished cold email. Study its structure, tone, and bold markers carefully:
 ${EXAMPLE_COLD_EMAIL}
 
-Now write a new cold email for a DIFFERENT company using the research below.
-Follow the same structure, tone, length, and style as the example above.
+Now write a new cold email for a DIFFERENT company using the research at the bottom of this prompt.
 
-Also, use the points from below when crafting each bullet point
-${POINTS_TO_USE}
+Follow the scaffold below EXACTLY. Change only the bracketed placeholders. Every other word, phrase, sentence, and punctuation mark stays exactly as written.
 
-Bold formatting rules:
-- Use **text** around key metrics and numbers (e.g. **99.99% availability**, **160,000+ requests/hour**)
-- Use **text** around specific product or system names (e.g. **SmartFunding**, **Aera vault**)
-- Use **text** around the most important result phrase in each bullet point intro
-- Do NOT bold generic phrases like "We'd" or "I've done this before"
+SECTION 1 — TITLE (no bold, no heading prefix, output starts here)
+Interest in joining [COMPANY]'s team as a DevOps and Platform Engineer
 
-Plain text rules (this is pasted directly into Gmail/LinkedIn, not rendered as markdown):
-- The ONLY markdown syntax allowed anywhere in the output is **text** for bold
-- Do NOT prefix the title, or any line, with # or ## or any other heading marker
-- Do NOT use markdown lists (-, *, 1.) for the bullet points, use the • character exactly as shown in the format example
-- Do NOT use backticks, underscores for italics, or any other markdown syntax
-- Output must start directly with the title text itself, nothing before it
+SECTION 2 — LINKEDIN PARENTHETICAL (copy exactly, change only COMPANY)
+(You can learn more about how my experience can benefit [COMPANY] from **my LinkedIn and resume below**
+https://www.linkedin.com/in/prince-onukwili-a82143233/)
 
-Instructions:
-- Replace COMPANY with the actual company name
-- Replace X and Y with the actual product or system names from the company's platform (shared below)
-- Write 3-4 bullet points, each tied to a specific named system or product from this company
-- Start each bullet with an action verb + the specific company system + result
-- Each "We'd" paragraph should name 1-2 specific cloud services
-- Each proof line should reference a real achievement from Prince's background with concrete numbers
-- Do NOT reuse the same proof point stat in two different bullets
-- Keep the language simple, no jargon, straight to the point
-- No em dashes, use commas, brackets, or ellipses instead
-- Follow the EXACT format examples above precisely, including the highlights section at the bottom
-- Don't change or modify the content which are not in placeholders, KEEP AS IS. Only change the COMPANY, X, and Y placeholders
-- Don't add unneccessary phrases and clauses to the points
-- Keep it simple, just like the example email above
+SECTION 3 — EXACTLY 3 OPENING QUESTIONS IN THIS FIXED ORDER AND ON THESE FIXED TOPICS
+Bold the full question sentence each time.
+
+Question 1 — topic: cost reduction (change only COMPANY):
+- **What if [COMPANY]'s monthly Cloud infrastructure costs reduced by 20% - 35% in the next 30 days**, without affecting its services reliability?
+
+Question 2 — topic: SOC 2 compliance (change only COMPANY):
+- **What if [COMPANY] could acquire SOC 2 compliance within the next 6 months** (if not currently certified), proving the security of its infrastructure and customers data?
+
+Question 3 — topic: availability (change COMPANY, and replace X and Y with real product/service names from the research):
+- **What if [COMPANY] [X] and [Y] apps could achieve 99.9% availability** and low-latency, while handling MILLIONS of customers **within the next 30 days?**
+
+SECTION 4 — INTRO LINE (copy exactly, change only COMPANY)
+Hi NAME...I'm Prince, I studied [COMPANY] services and **here're some ways I propose the Cloud infrastructure could be architected and improved to achieve the results above**
+
+SECTION 5 — EXACTLY 4 BULLET POINTS IN THIS EXACT ORDER
+
+Each bullet follows this 3-part structure:
+  Part A: "We'd..." proposal sentence. Name 1-2 specific cloud services or tools from the research. End with a comma or period. No trailing "ensuring...", "so that...", "allowing...", or "preventing..." clauses.
+  Part B: "This way, **[result phrase]**." Bold the result phrase.
+  Part C: "I've proven this before. **[stat with numbers]**" Bold the stat.
+
+--- BULLET 1: DDoS protection ---
+- We'd deploy Cloudflare's Web Application Firewall and DDoS protection in front of the public load balancers serving the [company's specific public-facing endpoints from the research],
+
+This way, **attack traffic gets filtered at the edge before it ever reaches your [company's specific infrastructure].**
+
+I've proven this before. **Engineered an infra on GKE Kubernetes that sustained an 80-100% block rate on a simulated DDoS attack while keeping a 100% success rate on real user traffic** (without real-user requests being dropped)
+
+---
+
+--- BULLET 2: Cost optimization ---
+- We'd schedule [staging / non-critical] workloads on AWS Spot Instances or GCP Preemptible VMs, since they don't need guaranteed uptime
+
+We'd also **engineer production workloads on AWS Reserved Instances or GCP Committed Use Discounts, getting ~50 - 60% discounts.**
+
+I've done this before. I **reduced a platform's monthly cloud spend from about $11,500 to $7,500 a month** by right-sizing resources and routing container logs properly.
+
+---
+
+--- BULLET 3: High availability ---
+- We'd run multiple instances of every [specific company service from the research] across multiple availability zones on the Kubernetes Cluster(s), GKE or EKS.
+
+This way, **a single zone or VM failure never takes your [specific service] offline for customers who need it**
+
+I've proven this kind of reliability before. **I engineered a platform on Google Kubernetes Engine that sustained 99.99% availability while handling 160,000+ requests per hour** (equivalent to 3.8 million a day)
+
+In another project, I also **engineered a highly available CockroachDB cluster handling 7.5+ million transactions per hour**, both while serving everyday user traffic
+
+---
+
+--- BULLET 4: SOC 2 / PKI / security compliance ---
+- We'd manage [COMPANY]'s Public and Private Key Infrastructure using Google Certificate Authority Service, issuing TLS certificates across every Kubernetes service
+
+This way, **all data in transit stays encrypted, one of the core areas SOC 2 auditors check for.**
+
+I've implemented this exact pattern before.
+**I ran a self-managed internal CA distributed through cert-manager. Also, securing service-to-service traffic with mutual TLS using Istio**
+
+I also **deployed Falco for runtime threat detection**,
+monitoring every running container for malicious behaviour and **alerting the team via Slack.**
+
+SECTION 6 — CLOSING (copy verbatim)
+-------------------------------------------------------
+
+I can't cover everything here...but I'd love to connect on a call or interview, **where I can share a detailed architectural diagram of the proposed infrastructure improvements** for the Cloud infrastructure
+
+[LEARN MORE...]
+
+**You can learn more about my experience in detail**, my projects and their case studies from my LinkedIn
+https://www.linkedin.com/in/prince-onukwili-a82143233/
+
+STRICT RULES — EACH VIOLATION MAKES THE EMAIL UNUSABLE:
+
+1. SECTION ORDER: Output exactly 6 sections in the order shown. Do not add, remove, or reorder anything.
+2. QUESTIONS: Exactly 3 opening questions. Fixed order and topics: cost reduction first, SOC 2 second, availability third. DDoS is bullet 1 in the body, NOT a question.
+3. BULLETS: Exactly 4 body bullets. Fixed order: DDoS first, cost second, availability third, SOC 2/PKI fourth. Do not swap or drop any bullet.
+4. BOLD MARKERS: Use **text** exactly where the scaffold shows it. Do not skip any. Do not add bold in positions the scaffold does not show.
+5. PLAIN TEXT ONLY: The only markdown allowed is **text**. No #, ##, -, *, 1., backticks, or underscores anywhere.
+6. BULLET CHARACTER: Use • for all bullet points, not - or *.
+7. NO EM DASHES: Use commas, brackets, or ellipses instead.
+8. CLEAN PART A ENDINGS: End each "We'd..." sentence cleanly. No trailing "ensuring...", "so that...", "allowing...", "preventing...", or similar clauses after the main point (excet those explicitly written in the example cold email)
+9. NO REPEATED STATS: Do not use the same proof-point number in two different bullets.
+10. PLACEHOLDERS ONLY: Change [COMPANY], [X], [Y], and the bracketed infrastructure names in the bullet text. Every other word stays exactly as written in the scaffold.
+11. OUTPUT STARTS WITH TITLE: No preamble. The first character of output is the first character of the title.
 
 Here is the research on the company's infrastructure:
 ${companyResearch}
@@ -290,7 +367,14 @@ Your goal: find the following people at this company:
 For each person you find:
 1. Check the company's /about or /team page first
 2. Search Google for "[Company Name] [Title] LinkedIn" to find their LinkedIn profile URL
-3. Look for their personal and company email address on GitHub profiles, speaker bios, personal websites, or contact pages, and the web in general
+3. Look for their personal AND company email addresses on GitHub profiles, speaker bios, personal websites, or contact pages, and the web in general
+4. For each person found, search for their PERSONAL email(s) (Gmail, Outlook, personal domain) IN ADDITION to their work email:
+   - Visit their GitHub profile (search: "[name] [company] github")
+   - Check their Twitter/X bio
+   - Check their personal website or blog if linked from LinkedIn or GitHub
+   - Check their Dev.to, Hashnode, or Medium author page
+   - Check conference speaker pages (KubeCon, DevOpsDays, etc.)
+   - Check their npm or PyPI author page if they publish packages
 
 Return ONLY a valid JSON array. No markdown, no code blocks, no explanation, no text before or after.
 
@@ -300,7 +384,7 @@ Each object must have exactly these four keys:
     "name": "string — full name, e.g. Jane Smith",
     "title": "string — their exact role",
     "linkedin": "string — full LinkedIn URL, or null if not found",
-    "email": "string — email address if found, or null if not found"
+    "email": "list of strings — email addresses if found, or null if not found"
   }
 ]
 

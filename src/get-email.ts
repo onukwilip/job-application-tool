@@ -70,9 +70,10 @@ interface RawPerson {
   linkedin?: string;
   linkedin_url?: string;
   linkedinUrl?: string;
-  email?: string;
-  email_address?: string;
-  emailAddress?: string;
+  email?: string | string[];
+  emails?: string | string[];
+  email_address?: string | string[];
+  emailAddress?: string | string[];
 }
 
 function normalizePerson(item: Record<string, unknown>): DecisionMaker | null {
@@ -83,7 +84,7 @@ function normalizePerson(item: Record<string, unknown>): DecisionMaker | null {
     raw.linkedin_url ??
     raw.linkedinUrl ??
     null) as string | null;
-  const email = (raw.email ?? raw.email_address ?? raw.emailAddress ?? null) as
+  const email = (raw.email ?? raw.emails ?? raw.email_address ?? raw.emailAddress ?? null) as
     | string
     | null;
 
@@ -94,7 +95,7 @@ function normalizePerson(item: Record<string, unknown>): DecisionMaker | null {
     name,
     title,
     linkedin: linkedin || null,
-    emails: email ? [email] : [],
+    emails: email ? (Array.isArray(email) ? email : [email]) : [],
   };
 }
 
@@ -135,7 +136,7 @@ Each object must have exactly these four keys:
     "name": "string — full name, e.g. Jane Smith",
     "title": "string — their exact role",
     "linkedin": "string — full LinkedIn URL, or null if not found",
-    "email": "string — email address if found, or null if not found"
+    "emails": "list of strings — email addresses if found, or null if not found"
   }
 Return ONLY the raw JSON array — no markdown, no explanation.
 Return [] if no valid people are found.
