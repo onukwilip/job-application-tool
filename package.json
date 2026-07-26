@@ -15,7 +15,8 @@
     "get-email": "tsx src/get-email.ts",
     "send-email": "tsx src/send-email.ts",
     "apply": "tsx src/apply.ts",
-    "run": "npm run gen-email && npm run get-email && npm run send-email"
+    "run": "npm run gen-email && npm run get-email && npm run send-email",
+    "list": "tsx src/list-contacts.ts"
   },
   "keywords": [],
   "author": "",
