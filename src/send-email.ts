@@ -104,8 +104,8 @@ async function sendToRecipient(
   }
 
   try {
-    await transporter.sendMail(mailOptions);
-    recordSend(company.id, recipientEmail, person.name);
+    const info = await transporter.sendMail(mailOptions);
+    recordSend(company.id, recipientEmail, person.name, info.messageId, subject);
     console.log(`  ✓ Sent to ${person.name} <${recipientEmail}>`);
     return true;
   } catch (err) {

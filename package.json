@@ -14,6 +14,7 @@
     "gen-email": "tsx src/generate-email.ts",
     "get-email": "tsx src/get-email.ts",
     "send-email": "tsx src/send-email.ts",
+    "followup": "tsx src/followup.ts",
     "apply": "tsx src/apply.ts",
     "run": "npm run gen-email && npm run get-email && npm run send-email",
     "list": "tsx src/list-contacts.ts"

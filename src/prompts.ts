@@ -84,9 +84,6 @@ https://www.linkedin.com/in/prince-onukwili-a82143233/
 export const EXAMPLE_COLD_EMAIL = `
 **Interest in joining COMPANY's team as a DevOps and Platform Engineer** 
 
-(You can learn more about **how my experience can benefit COMPANY from my LinkedIn and resume below**
-https://www.linkedin.com/in/prince-onukwili-a82143233/)
-
 • **What if COMPANY monthly Cloud infrastructure costs reduced by 20% - 35% in the next 30 days**, without affecting its services reliability?
 
 • **What if COMPANY could acquire SOC 2 compliance within the next 6 months** (if not currently certified), proving the security of its infrastructure and customers data?
@@ -95,6 +92,8 @@ https://www.linkedin.com/in/prince-onukwili-a82143233/)
 
 Hi NAME...I'm Prince, I studied COMPANY services and **here're some ways I propose the Cloud infrastructure could be architected and improved to achieve the results above**
 
+(You can learn more about **how my experience can benefit COMPANY from my LinkedIn and Resume/CV attached to this email**)
+https://www.linkedin.com/in/prince-onukwili-a82143233/)
 ---
 
 • We'd deploy Cloudflare's Web Application Firewall and DDoS protection in front of the public load balancers serving the Connector endpoints,
@@ -179,12 +178,12 @@ Follow the scaffold below EXACTLY. Change only the bracketed placeholders. Every
 SECTION 1 — TITLE (no bold, no heading prefix, output starts here)
 Interest in joining [COMPANY]'s team as a DevOps and Platform Engineer
 
-SECTION 2 — LINKEDIN PARENTHETICAL (copy exactly, change only COMPANY)
-(You can learn more about how my experience can benefit [COMPANY] from **my LinkedIn and resume below**
-https://www.linkedin.com/in/prince-onukwili-a82143233/)
-
-SECTION 3 — EXACTLY 3 OPENING QUESTIONS IN THIS FIXED ORDER AND ON THESE FIXED TOPICS
+SECTION 2 — EXACTLY 3 OPENING QUESTIONS IN THIS FIXED ORDER AND ON THESE FIXED TOPICS
 Bold the full question sentence each time.
+
+SECTION 3 — LINKEDIN PARENTHETICAL (copy exactly, change only COMPANY)
+(You can learn more about how my experience can benefit [COMPANY] from **my LinkedIn and Resume/CV attached to this email**
+https://www.linkedin.com/in/prince-onukwili-a82143233/)
 
 Question 1 — topic: cost reduction (change only COMPANY):
 - **What if [COMPANY]'s monthly Cloud infrastructure costs reduced by 20% - 35% in the next 30 days**, without affecting its services reliability?

@@ -172,6 +172,10 @@ export interface Send {
   email: string;
   name: string;
   sent_at: string;
+  message_id: string | null;
+  subject: string | null;
+  followup_sent_at: string | null;
+  followup_message_id: string | null;
 }
 
 /**
@@ -192,11 +196,17 @@ export function getCompaniesReadyToSend(): Company[] {
 }
 
 /** Record a sent email. Silently skips if already sent (UNIQUE constraint). */
-export function recordSend(companyId: number, email: string, name: string): void {
+export function recordSend(
+  companyId: number,
+  email: string,
+  name: string,
+  messageId: string,
+  subject: string
+): void {
   db.prepare(`
-    INSERT OR IGNORE INTO sends (company_id, email, name)
-    VALUES (?, ?, ?)
-  `).run(companyId, email, name);
+    INSERT OR IGNORE INTO sends (company_id, email, name, message_id, subject)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(companyId, email, name, messageId, subject);
 }
 
 /** Get full send history */
@@ -207,6 +217,33 @@ export function getSends(): Send[] {
     JOIN companies c ON c.id = s.company_id
     ORDER BY s.sent_at DESC
   `).all() as Send[];
+}
+
+export interface SendWithCompany extends Send {
+  company_name: string;
+}
+
+/** Returns sends eligible for follow-up: message_id present, no followup_sent_at, sent >= 3 days ago */
+export function getSendsReadyForFollowup(): SendWithCompany[] {
+  return db.prepare(`
+    SELECT s.*, c.name as company_name
+    FROM sends s
+    JOIN companies c ON c.id = s.company_id
+    WHERE s.message_id IS NOT NULL
+      AND s.followup_sent_at IS NULL
+      AND s.sent_at <= datetime('now', '-3 days')
+    ORDER BY s.sent_at ASC
+  `).all() as SendWithCompany[];
+}
+
+/** Record a follow-up email as sent */
+export function recordFollowup(sendId: number, followupMessageId: string): void {
+  db.prepare(`
+    UPDATE sends
+    SET followup_sent_at = datetime('now'),
+        followup_message_id = ?
+    WHERE id = ?
+  `).run(followupMessageId, sendId);
 }
 
 // ─── Application tracking ─────────────────────────────────────────────────────
