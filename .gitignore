@@ -1,8 +1,7 @@
 node_modules/
 dist/
 .env
-data/companies.db
-data/companies.sqbpro
+data/companies.*
 unused/
 assets/
 package-lock.json
