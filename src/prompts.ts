@@ -377,15 +377,22 @@ For each person you find:
 
 Return ONLY a valid JSON array. No markdown, no code blocks, no explanation, no text before or after.
 
-Each object must have exactly these four keys:
+Each object must have exactly these five keys:
 [
   {
     "name": "string — full name, e.g. Jane Smith",
     "title": "string — their exact role",
     "linkedin": "string — full LinkedIn URL, or null if not found",
-    "email": "list of strings — email addresses if found, or null if not found"
+    "work_emails": "list of strings — email address(es) at the company's own domain (matching ${companyUrl}), or null if not found",
+    "personal_emails": "list of strings — email address(es) NOT at the company's domain (Gmail, Outlook, Yahoo, Hotmail, personal domain, etc.), or null if not found"
   }
 ]
+
+Classification rules for emails — do NOT mix these two up:
+- work_emails: ONLY addresses whose domain matches the company's own website/email domain
+- personal_emails: ONLY addresses on a different domain (gmail.com, outlook.com, yahoo, hotmail, etc...a personal blog domain, etc.)
+- If you are not sure which category an email belongs to, leave it out entirely rather than guessing
+- The same email address must never appear in both lists
 
 Rules:
 - Only include people you actually found evidence for — do not guess or invent names

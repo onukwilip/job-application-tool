@@ -70,13 +70,63 @@ interface RawPerson {
   linkedin?: string;
   linkedin_url?: string;
   linkedinUrl?: string;
+  // New schema — BU classifies emails as work vs personal
+  work_email?: string | string[];
+  work_emails?: string | string[];
+  personal_email?: string | string[];
+  personal_emails?: string | string[];
+  // Legacy schema — single mixed email field (kept for backwards compatibility)
   email?: string | string[];
   emails?: string | string[];
   email_address?: string | string[];
   emailAddress?: string | string[];
 }
 
-function normalizePerson(item: Record<string, unknown>): DecisionMaker | null {
+/**
+ * Internal shape used while the pipeline still needs to distinguish work vs
+ * personal emails (enrichment only fills in a missing WORK email). Merged
+ * into the flat DecisionMaker.emails shape only at the very end, via
+ * toDecisionMaker().
+ */
+interface ParsedPerson {
+  name: string;
+  title: string;
+  linkedin: string | null;
+  workEmails: string[];
+  personalEmails: string[];
+}
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === "string" && v.trim().length > 0);
+  }
+  if (typeof value === "string" && value.trim().length > 0) return [value];
+  return [];
+}
+
+function dedupeEmails(emails: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const email of emails) {
+    const key = email.trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(email.trim());
+  }
+  return result;
+}
+
+/** Merges work + personal emails into the flat array DecisionMaker/DB expects. Work emails first. */
+function toDecisionMaker(person: ParsedPerson): DecisionMaker {
+  return {
+    name: person.name,
+    title: person.title,
+    linkedin: person.linkedin,
+    emails: dedupeEmails([...person.workEmails, ...person.personalEmails]),
+  };
+}
+
+function normalizePerson(item: Record<string, unknown>): ParsedPerson | null {
   const raw = item as RawPerson;
   const name = String(raw.name ?? raw.full_name ?? raw.fullName ?? "").trim();
   const title = String(raw.title ?? raw.position ?? raw.role ?? "").trim();
@@ -84,18 +134,27 @@ function normalizePerson(item: Record<string, unknown>): DecisionMaker | null {
     raw.linkedin_url ??
     raw.linkedinUrl ??
     null) as string | null;
-  const email = (raw.email ?? raw.emails ?? raw.email_address ?? raw.emailAddress ?? null) as
-    | string
-    | null;
 
   // Must have at least a name to be worth keeping
   if (!name) return null;
+
+  let workEmails = toStringArray(raw.work_emails ?? raw.work_email);
+  let personalEmails = toStringArray(raw.personal_emails ?? raw.personal_email);
+
+  // Legacy fallback: old BU/Haiku output had one mixed `email`/`emails` field.
+  // Only used when neither new-style field is present, to avoid double-counting.
+  if (workEmails.length === 0 && personalEmails.length === 0) {
+    workEmails = toStringArray(
+      raw.email ?? raw.emails ?? raw.email_address ?? raw.emailAddress,
+    );
+  }
 
   return {
     name,
     title,
     linkedin: linkedin || null,
-    emails: email ? (Array.isArray(email) ? email : [email]) : [],
+    workEmails,
+    personalEmails,
   };
 }
 
@@ -121,7 +180,7 @@ function unwrapObject(parsed: unknown): unknown[] | null {
 async function rescueWithClaude(
   raw: string,
   companyName: string,
-): Promise<DecisionMaker[]> {
+): Promise<ParsedPerson[]> {
   console.warn(`[${companyName}] Haiku rescue...`);
   try {
     const msg = await anthropic.messages.create({
@@ -131,13 +190,15 @@ async function rescueWithClaude(
         {
           role: "user",
           content: `Extract all people from this text and return a valid JSON array.
-Each object must have exactly these four keys:
+Each object must have exactly these five keys:
   {
     "name": "string — full name, e.g. Jane Smith",
     "title": "string — their exact role",
     "linkedin": "string — full LinkedIn URL, or null if not found",
-    "emails": "list of strings — email addresses if found, or null if not found"
+    "work_emails": "list of strings — email address(es) at their employer's domain, or null if not found",
+    "personal_emails": "list of strings — email address(es) NOT at their employer's domain (Gmail, Outlook, personal domain, etc.), or null if not found"
   }
+Do not mix up work_emails and personal_emails — an email only belongs in one of the two lists.
 Return ONLY the raw JSON array — no markdown, no explanation.
 Return [] if no valid people are found.
 
@@ -157,7 +218,7 @@ ${raw}`,
     if (!Array.isArray(parsed)) return [];
     return parsed
       .map((p: Record<string, unknown>) => normalizePerson(p))
-      .filter((p): p is DecisionMaker => p !== null);
+      .filter((p): p is ParsedPerson => p !== null);
   } catch (err) {
     console.error(`  [${companyName}] Haiku rescue failed:`, err);
     return [];
@@ -167,7 +228,7 @@ ${raw}`,
 async function parsePeople(
   raw: string,
   companyName: string,
-): Promise<DecisionMaker[]> {
+): Promise<ParsedPerson[]> {
   // Stage 1: strip markdown fences
   const cleaned = raw
     .replace(/^```json\s*/im, "")
@@ -194,7 +255,7 @@ async function parsePeople(
   if (items && items.length > 0) {
     const normalized = items
       .map((item) => normalizePerson(item as Record<string, unknown>))
-      .filter((p): p is DecisionMaker => p !== null);
+      .filter((p): p is ParsedPerson => p !== null);
     if (normalized.length > 0) return normalized;
     console.warn(
       `[${companyName}] Parsed ${items.length} items but none survived normalisation`,
@@ -287,13 +348,15 @@ async function tryAnymailByName(
   }
 }
 
-// TODO: For each decision maker, if no email exists, try to find one using Hunter IO or Anymail Finder
+// TODO: For each decision maker, if no work email exists, try to find one using Hunter IO or Anymail Finder
+// Hunter/Anymail both look up an email by (name + company domain), so anything they find is a WORK email —
+// this runs whenever workEmails is empty, even if a personal email was already found by BU.
 async function furtherGetEmail(
-  person: DecisionMaker,
+  person: ParsedPerson,
   domain: string,
-): Promise<DecisionMaker> {
-  // Already has an email from BU — no enrichment needed
-  if (person.emails.length > 0 && person.emails[0]) return person;
+): Promise<ParsedPerson> {
+  // Already has a work email — no enrichment needed
+  if (person.workEmails.length > 0) return person;
 
   const nameParts = person.name.trim().split(/\s+/);
   const firstName = nameParts[0] ?? "";
@@ -303,8 +366,8 @@ async function furtherGetEmail(
   if (firstName && lastName && domain && HUNTER_KEY) {
     const hunterEmail = await tryHunter(firstName, lastName, domain);
     if (hunterEmail) {
-      console.log(`    [Hunter] Found email for ${person.name}`);
-      return { ...person, emails: [hunterEmail] };
+      console.log(`    [Hunter] Found work email for ${person.name}`);
+      return { ...person, workEmails: [hunterEmail] };
     }
   }
 
@@ -312,8 +375,8 @@ async function furtherGetEmail(
   if (person.linkedin && ANYMAIL_KEY) {
     const anymailEmail = await tryAnymailByLinkedIn(person.linkedin);
     if (anymailEmail) {
-      console.log(`    [Anymail/LinkedIn] Found email for ${person.name}`);
-      return { ...person, emails: [anymailEmail] };
+      console.log(`    [Anymail/LinkedIn] Found work email for ${person.name}`);
+      return { ...person, workEmails: [anymailEmail] };
     }
   }
 
@@ -321,12 +384,12 @@ async function furtherGetEmail(
   if (!person.linkedin && firstName && domain && ANYMAIL_KEY) {
     const anymailEmail = await tryAnymailByName(firstName, lastName, domain);
     if (anymailEmail) {
-      console.log(`    [Anymail/Name] Found email for ${person.name}`);
-      return { ...person, emails: [anymailEmail] };
+      console.log(`    [Anymail/Name] Found work email for ${person.name}`);
+      return { ...person, workEmails: [anymailEmail] };
     }
   }
 
-  // Nothing found — leave email empty
+  // Nothing found — leave work email empty
   return person;
 }
 
@@ -349,17 +412,19 @@ async function getCompanyDecisionMakers(company: Company): Promise<void> {
     const people = await parsePeople(raw, company.name);
     console.log(`  BU found ${people.length} person(s) for ${company.name}`);
 
-    // Step 3: Enrich emails for anyone missing one
-    const enriched = await Promise.all(
+    // Step 3: Enrich work emails for anyone missing one
+    const enrichedParsed = await Promise.all(
       people.map(person => furtherGetEmail(person, domain))
     );
 
-    enriched.forEach(p => {
-      const emailStatus = p.emails.length > 0 ? p.emails[0] : 'no email found';
-      console.log(`  - ${p.title}: ${p.name} | ${emailStatus} | ${p.linkedin ?? 'no LinkedIn'}`);
+    enrichedParsed.forEach(p => {
+      const workStatus     = p.workEmails.length > 0 ? p.workEmails.join(', ') : 'no work email';
+      const personalStatus = p.personalEmails.length > 0 ? p.personalEmails.join(', ') : 'no personal email';
+      console.log(`  - ${p.title}: ${p.name} | work: ${workStatus} | personal: ${personalStatus} | ${p.linkedin ?? 'no LinkedIn'}`);
     });
 
-    // Step 4: Store
+    // Step 4: Merge work + personal into the flat DecisionMaker.emails shape and store
+    const enriched = enrichedParsed.map(toDecisionMaker);
     updateOutreach(company.id, enriched);
     console.log(`  [DONE] ${company.name}`);
   } catch (err) {

@@ -3,3 +3,6 @@ dist/
 .env
 data/companies.db
 data/companies.sqbpro
+unused/
+assets/
+package-lock.json
