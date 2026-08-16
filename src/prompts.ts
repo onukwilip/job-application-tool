@@ -1,4 +1,4 @@
-export const RESEARCH_PROMPT = (
+/* export const RESEARCH_PROMPT = (
   companyName: string,
   urls: string,
   jobAd: string,
@@ -22,6 +22,22 @@ Return a structured summary covering:
 - Their confirmed or likely cloud infrastructure and tech stack
 - Their key infrastructure pain points and engineering challenges
 - Any specific product names or internal systems mentioned
+`; */
+
+export const RESEARCH_PROMPT = (
+  companyName: string,
+  urls: string,
+  jobAd: string,
+): string => `
+Visit ${urls} and return:
+1. What the company does in 2-3 sentences
+2. Their cloud provider (AWS / GCP / Azure / other)
+3. Their confirmed tech stack (Kubernetes, Terraform, etc.) and(or) products/services (if any found)
+4. 2 key infrastructure pain points visible from their site or job ad
+
+Job ad for context: ${jobAd}
+
+Be concise. Do not search beyond the provided URLs.
 `;
 
 export const YOUR_BACKGROUND = `

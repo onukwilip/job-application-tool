@@ -1,7 +1,7 @@
 import "dotenv/config";
 import pLimit from "p-limit";
 import Anthropic from "@anthropic-ai/sdk";
-import { BrowserUse, type BuModel } from "browser-use-sdk/v3";
+import { bu } from "./bu-adapter.js";
 import {
   PLATFORMS,
   DISCOVERY_PROMPT,
@@ -11,16 +11,12 @@ import { insertDiscoveredJob, getSummary, type DiscoveredJob } from "./db.js";
 
 // ─── Clients ─────────────────────────────────────────────────────────────────
 
-const browserUse = new BrowserUse({
-  apiKey: process.env.BROWSER_USE_API_KEY!,
-});
-
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
 });
 
 const CONCURRENCY = parseInt(process.env.DISCOVERY_CONCURRENCY ?? "4", 10);
-const MODEL = (process.env.BROWSER_USE_MODEL ?? "gpt-5.4-mini") as BuModel;
+const MODEL = process.env.BROWSER_USE_MODEL ?? "gpt-5.4-mini";
 
 // ─── JSON parsing with rescue chain ──────────────────────────────────────────
 
@@ -196,15 +192,14 @@ async function discoverFromPlatform(
   console.log(`\n[START] Searching ${platform.name}...`);
 
   try {
-    const result = await browserUse.run(DISCOVERY_PROMPT(platform), {
+    const { output } = await bu(DISCOVERY_PROMPT(platform), {
       model: MODEL,
     });
 
-    const rawOutput = result.output;
     const raw =
-      typeof rawOutput === "string"
-        ? rawOutput
-        : JSON.stringify(rawOutput ?? []);
+      typeof output === "string"
+        ? output
+        : JSON.stringify(output ?? []);
 
     const jobs = await parseJobs(raw, platform.name); // parseJobs is async
     console.log(`  [${platform.name}] Found ${jobs.length} matching jobs`);

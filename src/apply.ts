@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import pLimit from 'p-limit';
 import Anthropic from '@anthropic-ai/sdk';
-import { BrowserUse, type BuModel } from 'browser-use-sdk/v3';
+import { bu } from './bu-adapter.js';
 import CapSolver from 'node-capsolver';
 import {
   getCompaniesReadyToApply,
@@ -16,12 +16,11 @@ import { APPLY_PROMPT } from './prompts.js';
 
 // ─── Clients ─────────────────────────────────────────────────────────────────
 
-const browserUse = new BrowserUse({ apiKey: process.env.BROWSER_USE_API_KEY! });
 const anthropic  = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const BU_MODEL   = (process.env.APPLY_BU_MODEL ?? 'bu-mini') as BuModel;
+const BU_MODEL   = process.env.APPLY_BU_MODEL ?? 'bu-mini';
 const APPLY_LIMIT = process.env.APPLY_LIMIT
   ? parseInt(process.env.APPLY_LIMIT, 10)
   : undefined;
@@ -365,12 +364,11 @@ async function applyToCompany(company: Company): Promise<void> {
   const prompt = APPLY_PROMPT(APPLICANT, jobUrl, coverLetter);
 
   try {
-    const result = await browserUse.run(prompt, { model: BU_MODEL });
+    const { output } = await bu(prompt, { model: BU_MODEL });
 
-    const rawOutput = result.output;
-    const raw = typeof rawOutput === 'string'
-      ? rawOutput
-      : JSON.stringify(rawOutput ?? {});
+    const raw = typeof output === 'string'
+      ? output
+      : JSON.stringify(output ?? {});
 
     const parsed = await parseResult(raw, company.name);
 

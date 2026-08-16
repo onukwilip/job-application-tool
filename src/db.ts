@@ -18,6 +18,8 @@ export interface Company {
   applied_at: string | null;
   applied_error: string | null;
   error: string | null;
+  research_bu_session_id: number | null;
+  outreach_bu_session_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -63,12 +65,19 @@ export function getPendingCompanies(): Company[] {
   `).all() as Company[];
 }
 
-export function updateInfrastructure(id: number, infrastructure: string): void {
+export function updateInfrastructure(
+  id: number,
+  infrastructure: string,
+  sessionId?: number,
+): void {
   db.prepare(`
     UPDATE companies
-    SET infrastructure = ?, status = 'researched', updated_at = datetime('now')
+    SET infrastructure         = ?,
+        status                 = 'researched',
+        research_bu_session_id = COALESCE(?, research_bu_session_id),
+        updated_at             = datetime('now')
     WHERE id = ?
-  `).run(infrastructure, id);
+  `).run(infrastructure, sessionId ?? null, id);
 }
 
 export function updateColdEmail(id: number, cold_email: string): void {
@@ -147,12 +156,19 @@ export function getCompaniesForOutreach(): Company[] {
 }
 
 /** Saves the array of decision makers as JSON and marks outreach as done */
-export function updateOutreach(id: number, people: DecisionMaker[]): void {
+export function updateOutreach(
+  id: number,
+  people: DecisionMaker[],
+  sessionId?: number,
+): void {
   db.prepare(`
     UPDATE companies
-    SET outreach = ?, outreach_status = 'done', updated_at = datetime('now')
+    SET outreach               = ?,
+        outreach_status        = 'done',
+        outreach_bu_session_id = COALESCE(?, outreach_bu_session_id),
+        updated_at             = datetime('now')
     WHERE id = ?
-  `).run(JSON.stringify(people), id);
+  `).run(JSON.stringify(people), sessionId ?? null, id);
 }
 
 /** Marks outreach research as failed for this company */

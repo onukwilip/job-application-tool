@@ -23,12 +23,13 @@ async function processCompany(company: Company): Promise<void> {
 
     if (!infrastructure) {
       console.log(`  Researching ${company.name} via Browser Use...`);
-      infrastructure = await researchCompany(
+      const { output, sessionId } = await researchCompany(
         company.name,
         company.urls,
         company.job_ad
       );
-      updateInfrastructure(company.id, infrastructure);
+      infrastructure = output;
+      updateInfrastructure(company.id, infrastructure, sessionId);
       console.log(`  Research saved for ${company.name}`);
     } else {
       console.log(`  Skipping research for ${company.name} (already done)`);

@@ -10,6 +10,7 @@
     "migrate-apply": "tsx src/migrate-apply.ts",
     "reset-skipped-applies": "tsx src/reset-skipped-applies.ts",
     "migrate-outreach": "tsx src/migrate-outreach.ts",
+    "migrate-bu-sessions": "tsx src/migrate-bu-sessions.ts",
     "discover": "tsx src/discover.ts",
     "gen-email": "tsx src/generate-email.ts",
     "get-email": "tsx src/get-email.ts",

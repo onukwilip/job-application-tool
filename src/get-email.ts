@@ -1,4 +1,4 @@
-import { BrowserUse, type BuModel } from "browser-use-sdk/v3";
+import { bu } from "./bu-adapter.js";
 import "dotenv/config";
 import pLimit from "p-limit";
 import Anthropic from "@anthropic-ai/sdk";
@@ -10,7 +10,6 @@ import { OUTREACH_PROMPT } from "./prompts.js";
 const CONCURRENCY = parseInt(process.env.CONCURRENCY ?? "5", 10);
 const OUTREACH_LIMIT_RAW = process.env.OUTREACH_LIMIT ?? "0";
 const OUTREACH_LIMIT = parseInt(OUTREACH_LIMIT_RAW);
-const BU_MODEL = (process.env.BROWSER_USE_MODEL ?? "gemini-3-pro") as string;
 const HUNTER_KEY = process.env.HUNTER_API_KEY;
 const ANYMAIL_KEY = process.env.ANYMAIL_FINDER_API_KEY;
 
@@ -48,11 +47,6 @@ const TARGET_SENIORITY = [
   "Owner",
   "Partner",
 ];
-
-// TODO: Import BU client
-const bu_client = new BrowserUse({
-  apiKey: process.env.BROWSER_USE_API_KEY!,
-});
 
 // TODO: Import Claude client
 const anthropic = new Anthropic({
@@ -401,12 +395,11 @@ async function getCompanyDecisionMakers(company: Company): Promise<void> {
   try {
     // Step 1: Browser Use finds decision makers
     const prompt = OUTREACH_PROMPT(company.name, company.urls);
-    const result = await bu_client.run(prompt, { model: BU_MODEL as BuModel });
+    const { output, sessionId } = await bu(prompt);
 
-    const rawOutput = result.output;
-    const raw = typeof rawOutput === 'string'
-      ? rawOutput
-      : JSON.stringify(rawOutput ?? []);
+    const raw = typeof output === 'string'
+      ? output
+      : JSON.stringify(output ?? []);
 
     // Step 2: Parse + normalize
     const people = await parsePeople(raw, company.name);
@@ -425,7 +418,7 @@ async function getCompanyDecisionMakers(company: Company): Promise<void> {
 
     // Step 4: Merge work + personal into the flat DecisionMaker.emails shape and store
     const enriched = enrichedParsed.map(toDecisionMaker);
-    updateOutreach(company.id, enriched);
+    updateOutreach(company.id, enriched, sessionId);
     console.log(`  [DONE] ${company.name}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -436,7 +429,7 @@ async function getCompanyDecisionMakers(company: Company): Promise<void> {
 
 async function main() {
   console.log('Starting outreach email discovery...');
-  console.log(`BU model: ${BU_MODEL} | Concurrency: ${CONCURRENCY}`);
+  console.log(`BU: ${process.env.BROWSER_USE_LOCAL === 'true' ? 'local' : 'cloud'} | Concurrency: ${CONCURRENCY}`);
   console.log('Enrichment providers:', [
     HUNTER_KEY   && 'Hunter.io',
     ANYMAIL_KEY  && 'Anymail Finder',
