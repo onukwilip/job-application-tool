@@ -317,4 +317,24 @@ export function getApplyStats() {
   `).all();
 }
 
+// ─── LinkedIn opens tracking ──────────────────────────────────────────────────
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS linkedin_opens (
+    url        TEXT PRIMARY KEY,
+    opened_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+
+/** Returns the set of LinkedIn URLs already opened in a previous run */
+export function getOpenedLinkedinUrls(): Set<string> {
+  const rows = db.prepare(`SELECT url FROM linkedin_opens`).all() as { url: string }[];
+  return new Set(rows.map((r) => r.url));
+}
+
+/** Records a LinkedIn URL as opened. Silently skips if already recorded. */
+export function recordLinkedinOpen(url: string): void {
+  db.prepare(`INSERT OR IGNORE INTO linkedin_opens (url) VALUES (?)`).run(url);
+}
+
 export default db;

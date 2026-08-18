@@ -366,7 +366,7 @@ Rules:
 
 // --- Get Email ---
 
-export function OUTREACH_PROMPT(companyName: string, companyUrl: string): string {
+/* export function OUTREACH_PROMPT(companyName: string, companyUrl: string): string {
   return `
 You are a research assistant helping find technical decision makers at a company.
 
@@ -415,6 +415,162 @@ Rules:
 - Return [] if you cannot find any relevant people at this company
 - Do NOT wrap JSON in markdown fences
 `;
+} */
+
+/* export function OUTREACH_PROMPT(companyName: string, companyUrl: string): string {
+  return `Find technical decision makers at ${companyName} and their personal contact emails.
+
+── PHASE 1: Find people (max 3 steps) ───────────────────────────────────────
+1. Visit ${companyUrl}/about and ${companyUrl}/team — read the page
+2. Find people with these roles: CTO, VP of Engineering, Head of Engineering /
+   DevOps / Cloud / Infrastructure / Platform, Co-Founder, CEO
+3. If no team page exists, do ONE Google search:
+   "${companyName} CTO OR VP Engineering OR Head of Engineering"
+   and read the top results only — do NOT click through
+
+── PHASE 2: Find personal emails (max 2 steps per person) ───────────────────
+For each person found (up to 4 people total):
+
+Step A — Do ONE Google search:
+  "[full name]" "${companyName}" site:github.com OR site:dev.to OR site:twitter.com OR site:medium.com
+
+  Read the search result SNIPPETS carefully:
+  - If an email address appears directly in the snippet text → record it
+  - If a GitHub profile URL appears in the snippets → go to Step B
+  - Otherwise → move on to the next person
+
+Step B (only if a GitHub URL was found in snippets) — Visit that GitHub profile ONCE:
+  - Check the profile bio section for an email address
+  - Check the pinned repos list for a contact email in READMEs — only if visible without clicking
+  - Record any personal email found, then stop
+
+Do NOT visit Twitter, Dev.to, Medium or any other site — only GitHub if its URL appeared in snippets.
+Do NOT visit LinkedIn.
+Do NOT run more searches per person beyond Step A.
+
+── OUTPUT FORMAT ─────────────────────────────────────────────────────────────
+Return ONLY a valid JSON array. No markdown, no explanation, nothing else:
+[
+  {
+    "name": "Full Name",
+    "title": "Their exact role",
+    "linkedin": "Full LinkedIn URL, or null",
+    "work_emails": [],
+    "personal_emails": ["email@gmail.com"]
+  }
+]
+
+Classification rules:
+- personal_emails: ONLY addresses NOT on the company domain
+  (Gmail, Outlook, Yahoo, Hotmail, personal domain, etc.)
+- work_emails: leave as [] — enriched separately downstream
+- Never put the same address in both lists
+
+General rules:
+- Only include people you found direct evidence for — never invent or guess
+- Stop after finding up to 4 people
+- Return [] if no matching people are found`;
+} */
+
+export function OUTREACH_PROMPT(
+  companyName: string,
+  companyUrl: string,
+  jobTitle?: string,
+  jobUrl?: string,
+): string {
+  return `Find technical decision makers, the recruiter for this role, and HR contact details at ${companyName}.
+${jobTitle ? `\nTarget role: ${jobTitle}` : ''}
+${jobUrl ? `Job posting URL: ${jobUrl}` : ''}
+
+── PHASE 1: Find decision makers (max 3 steps) ──────────────────────────────
+1. Visit ${companyUrl}/about and ${companyUrl}/team — read the page
+2. Find people with these roles: CTO, VP of Engineering, Head of Engineering /
+   DevOps / Cloud / Infrastructure / Platform, Co-Founder, CEO
+3. If no team page exists, do ONE Google search:
+   "${companyName} CTO OR VP Engineering OR Head of Engineering"
+   and read the top results only — do NOT click through
+
+── PHASE 2: Find personal emails for decision makers (max 2 steps per person) ─
+For each decision maker found (up to 4 people):
+
+Step A — Do ONE Google search:
+  "[full name]" "${companyName}" site:github.com OR site:dev.to OR site:twitter.com OR site:medium.com
+  - If an email appears directly in a snippet → record it
+  - If a GitHub profile URL appears in a snippet → go to Step B
+  - Otherwise → move on to the next person
+
+Step B (only if a GitHub URL appeared in snippets) — Visit that GitHub profile ONCE:
+  - Check the bio section and any visible README for an email address
+  - Record it and stop
+
+Do NOT visit Twitter, Dev.to, Medium, or LinkedIn.
+Do NOT run more than one search per person.
+
+── PHASE 3: Find recruiter and HR contacts (max 3 steps) ────────────────────
+${jobUrl ? `1. Visit the job posting URL: ${jobUrl}
+   - Look for a recruiter name, "Posted by", "Contact", or email on the page
+   - Note their name, title, and any email shown` : `1. Skip this step (no job URL provided)`}
+
+2. Visit ${companyUrl}/careers and ${companyUrl}/contact (try both):
+   - Look for email addresses such as hr@, careers@, jobs@, people@, talent@, recruiting@
+   - Look for a named recruiter or talent acquisition contact
+   - For any inbox email found (hr@, careers@, etc.), record it as its own entry:
+     · name: "" for hr@/people@ addresses, or "" for careers@/jobs@/talent@/recruiting@ addresses
+     · title: "HR Email" for hr@/people@ addresses, or "Career Email" for careers@/jobs@/talent@/recruiting@ addresses
+     · linkedin: null
+     · work_emails: [the inbox address]
+     · personal_emails: []
+
+3. If no recruiter was found in steps 1-2, do ONE Google search:
+   "${companyName}"${jobTitle ? ` "${jobTitle}"` : ''} recruiter OR "talent acquisition" OR "HR"
+   - Read snippets only — do NOT click through
+   - Note any recruiter name or email that appears in the snippets
+
+── OUTPUT FORMAT ─────────────────────────────────────────────────────────────
+Return ONLY a valid JSON array — no markdown, no explanation, nothing else.
+Include decision makers, recruiters, and HR inboxes all in the same array.
+
+[
+  {
+    "name": "Jane Smith",
+    "title": "CTO",
+    "linkedin": "https://linkedin.com/in/janesmith",
+    "work_emails": [],
+    "personal_emails": ["jane@gmail.com"]
+  },
+  {
+    "name": "Tom Lee",
+    "title": "Technical Recruiter",
+    "linkedin": "https://linkedin.com/in/tomlee",
+    "work_emails": ["tom@company.com"],
+    "personal_emails": []
+  },
+  {
+    "name": "",
+    "title": "HR Email",
+    "linkedin": null,
+    "work_emails": ["hr@company.com"],
+    "personal_emails": []
+  },
+  {
+    "name": "",
+    "title": "Career Email",
+    "linkedin": null,
+    "work_emails": ["careers@company.com"],
+    "personal_emails": []
+  }
+]
+
+Classification rules:
+- personal_emails: ONLY addresses NOT on the company domain (Gmail, Outlook, Yahoo, personal domain, etc.)
+- work_emails: ONLY addresses on the company domain, OR standard HR/careers inbox addresses found on the company site
+- Never put the same address in both lists
+- Always use the exact name/title/linkedin/work_emails/personal_emails structure shown above — no extra keys
+
+General rules:
+- Only include people or inboxes you found direct evidence for — never guess or invent
+- Prioritise finding the recruiter for ${jobTitle ?? 'the engineering role'} specifically
+- Return [] if nothing relevant is found`;
 }
 
 export function APPLY_PROMPT(APPLICANT: any, jobUrl: string, coverLetterBody: string): string {

@@ -394,7 +394,7 @@ async function getCompanyDecisionMakers(company: Company): Promise<void> {
 
   try {
     // Step 1: Browser Use finds decision makers
-    const prompt = OUTREACH_PROMPT(company.name, company.urls);
+    const prompt = OUTREACH_PROMPT(company.name, company.urls, `${company.job_ad.slice(0, 200)}...`, company.job_url ?? undefined);
     const { output, sessionId } = await bu(prompt);
 
     const raw = typeof output === 'string'

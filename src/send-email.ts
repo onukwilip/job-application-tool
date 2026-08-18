@@ -46,8 +46,8 @@ function sleep(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms));
 }
 
-function firstNameOf(fullName: string): string {
-  return fullName.trim().split(/\s+/)[0] ?? fullName;
+function firstNameOf(fullName: string): (string | undefined) {
+  return fullName.trim().split(/\s+/)[0] ?? fullName ?? undefined;
 }
 
 /**
@@ -55,8 +55,9 @@ function firstNameOf(fullName: string): string {
  * Matches ONLY the exact string NAME — capital N, with square brackets.
  * Does NOT match name, Name, or the word "name" appearing elsewhere.
  */
-function personalize(coldEmail: string, firstName: string): string {
-  return coldEmail.replace(/\bNAME\b/g, firstName);
+function personalize(coldEmail: string, firstName: string | undefined): string {
+
+  return coldEmail.replace(/\bNAME\b/g, firstName ?? "");
 }
 
 // ─── Send one email ───────────────────────────────────────────────────────────
@@ -69,7 +70,7 @@ async function sendToRecipient(
   if (!recipientEmail) return false;
 
   const firstName      = firstNameOf(person.name);
-  const personalizedBody = personalize(company.cold_email ?? '', firstName);
+  const personalizedBody = personalize(company.cold_email ?? '', firstName ?? undefined);
   const subject        = `Engineering 99.9% reliability for ${company.name} Cloud infrastructure`;
 
   const attachmentExists = ATTACHMENT_PATH ? fs.existsSync(ATTACHMENT_PATH) : false;
@@ -78,7 +79,7 @@ async function sendToRecipient(
     console.log(`  [DRY RUN] Would send to ${person.name} <${recipientEmail}>`);
     console.log(`  [DRY RUN]   Subject: ${subject}`);
     console.log(`  [DRY RUN]   Attachment: ${ATTACHMENT_PATH ? (attachmentExists ? ATTACHMENT_PATH : `${ATTACHMENT_PATH} (missing, would send without it)`) : 'none'}`);
-    console.log(`  [DRY RUN]   Body preview: ${personalizedBody.slice(0, 200)}${personalizedBody.length > 200 ? '...' : ''}`);
+    console.log(`  [DRY RUN]   Body preview: ${personalizedBody}`);
     return true;
   }
 

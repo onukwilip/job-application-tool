@@ -17,8 +17,10 @@
     "send-email": "tsx src/send-email.ts",
     "followup": "tsx src/followup.ts",
     "apply": "tsx src/apply.ts",
-    "run": "npm run gen-email && npm run get-email && npm run send-email",
-    "list": "tsx src/list-contacts.ts"
+    "run": "BROWSER_USE_LOCAL=true npm run gen-email && BROWSER_USE_LOCAL=false npm run get-email && npm run send-email",
+    "run-no-email": "BROWSER_USE_LOCAL=true npm run gen-email && BROWSER_USE_LOCAL=false npm run get-email",
+    "list": "tsx src/list-contacts.ts",
+    "open-linkedin": "tsx src/open-linkedin.ts"
   },
   "keywords": [],
   "author": "",
