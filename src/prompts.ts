@@ -284,6 +284,33 @@ STRICT RULES — EACH VIOLATION MAKES THE EMAIL UNUSABLE:
 10. PLACEHOLDERS ONLY: Change [COMPANY], [X], [Y], and the bracketed infrastructure names in the bullet text. Every other word stays exactly as written in the scaffold.
 11. OUTPUT STARTS WITH TITLE: No preamble. The first character of output is the first character of the title.
 
+PART B — LINKEDIN CONNECTION REQUEST
+After writing the cold email, also write a short LinkedIn connection request message.
+
+Template to follow exactly:
+Hey NAME, I'm Prince. I came across a DevOps & Cloud role at COMPANY.
+
+I'd like to discuss ways to optimise COMPANY's Cloud costs, engineer 99.9% reliability for its X and Y services, and protect them from CVEs.
+
+Rules for Part B:
+- NAME stays as the literal word NAME — it is a placeholder replaced at send time
+- COMPANY is replaced with the actual company name
+- X and Y are 1-2 specific infrastructure systems or services identified in the research (e.g. "Kubernetes cluster" and "data ingestion pipeline")
+- The entire message must be under 280 characters including spaces
+- No bold markers, no emoji, no links — plain text only
+
+OUTPUT FORMAT
+Write your response in exactly two labeled sections, in this order:
+
+<EMAIL>
+[the full cold email exactly as you would have written it — with **bold markers** as normal]
+</EMAIL>
+<LINKEDIN>
+[the LinkedIn connection request message — plain text only, no bold markers, under 280 characters]
+</LINKEDIN>
+
+Do not write anything outside these two tags.
+
 Here is the research on the company's infrastructure:
 ${companyResearch}
 `;

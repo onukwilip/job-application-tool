@@ -337,4 +337,13 @@ export function recordLinkedinOpen(url: string): void {
   db.prepare(`INSERT OR IGNORE INTO linkedin_opens (url) VALUES (?)`).run(url);
 }
 
+/** Updates the LinkedIn DM for a company */
+export function updateLinkedInDm(id: number, dm: string): void {
+  db.prepare(`
+    UPDATE companies
+    SET linkedin_dm = ?
+    WHERE id = ?
+  `).run(dm, id);
+}
+
 export default db;
