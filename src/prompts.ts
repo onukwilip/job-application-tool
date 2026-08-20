@@ -108,7 +108,7 @@ export const EXAMPLE_COLD_EMAIL = `
 
 Hi NAME...I'm Prince, I studied COMPANY services and **here're some ways I propose the Cloud infrastructure could be architected and improved to achieve the results above**
 
-(You can learn more about **how my experience can benefit COMPANY from my LinkedIn and Resume/CV attached to this email**)
+(You can learn more about **how my experience can benefit COMPANY from my LinkedIn and Resume/CV attached**)
 https://www.linkedin.com/in/prince-onukwili-a82143233/)
 ---
 
@@ -177,6 +177,30 @@ export const POINTS_TO_USE = `
    Proof: Ran a self-managed internal CA distributed through cert-manager, securing service-to-service traffic with mutual TLS using Istio. Also deployed Falco for runtime threat detection, monitoring every running container for malicious behaviour and alerting the team via Slack.
 `;
 
+export const LINKEDIN_CONNECTION_TEMPLATE = `
+Hey NAME, I'm Prince. I came across a DevOps & Cloud role at COMPANY.
+
+I'd like to discuss ways to optimise COMPANY's Cloud costs, engineer 99.9% reliability for its X and Y services, and protect them from attacks.
+`;
+
+export const LINKEDIN_DM_TEMPLATE = `
+Hi NAME, it's great connecting with you...
+**Here're ways we could optimize COMPANY Cloud infrastructure**
+
+---
+
+- Reducing X & Y services monthly Cloud Costs...
+
+I've done this in previous projects, especially one where I **Reduced monthly Google Cloud infrastructure Costs from $11,500/month to $7,500/month** by right-sizing resources and switching billing models
+
+- Engineering 99.9% reliability for Y services...
+
+In another project, I engineered microservices and DB on GKE which **sustained 160k+ requests/hour (equiv. to 3.8 million requests/day) with 99.99% availability** and success rate
+
+- Protecting its X services from malicious attacks (e.g. DDoS, CVEs)
+
+I've protected infrastructure from simulated attacks, e.g. one which **sustained an 80-100% block rate on a simulated DDoS attack while keeping a 100% success rate on user traffic**
+`;
 
 export const EMAIL_GENERATION_PROMPT = (companyResearch: string): string => `
 You are helping Prince Onukwili, a Senior DevOps and Platform Engineer, write a cold outreach email to a company's engineering leadership.
@@ -198,7 +222,7 @@ SECTION 2 — EXACTLY 3 OPENING QUESTIONS IN THIS FIXED ORDER AND ON THESE FIXED
 Bold the full question sentence each time.
 
 SECTION 3 — LINKEDIN PARENTHETICAL (copy exactly, change only COMPANY)
-(You can learn more about how my experience can benefit [COMPANY] from **my LinkedIn and Resume/CV attached to this email**
+(You can learn more about how my experience can benefit [COMPANY] from **my LinkedIn and Resume/CV attached**
 https://www.linkedin.com/in/prince-onukwili-a82143233/)
 
 Question 1 — topic: cost reduction (change only COMPANY):
@@ -285,31 +309,62 @@ STRICT RULES — EACH VIOLATION MAKES THE EMAIL UNUSABLE:
 11. OUTPUT STARTS WITH TITLE: No preamble. The first character of output is the first character of the title.
 
 PART B — LINKEDIN CONNECTION REQUEST
+
 After writing the cold email, also write a short LinkedIn connection request message.
 
 Template to follow exactly:
-Hey NAME, I'm Prince. I came across a DevOps & Cloud role at COMPANY.
 
-I'd like to discuss ways to optimise COMPANY's Cloud costs, engineer 99.9% reliability for its X and Y services, and protect them from CVEs.
+${LINKEDIN_CONNECTION_TEMPLATE}
 
 Rules for Part B:
+
 - NAME stays as the literal word NAME — it is a placeholder replaced at send time
+
 - COMPANY is replaced with the actual company name
+
 - X and Y are 1-2 specific infrastructure systems or services identified in the research (e.g. "Kubernetes cluster" and "data ingestion pipeline")
+
 - The entire message must be under 280 characters including spaces
+
 - No bold markers, no emoji, no links — plain text only
 
+PART C — LINKEDIN POST-CONNECTION DM
+
+After the connection request message, write the follow-up DM to send once the connection is accepted.
+
+Template to follow exactly:
+
+${LINKEDIN_DM_TEMPLATE}
+
+Rules for Part C:
+
+- NAME stays as the literal word NAME — replaced at send time
+
+- COMPANY is replaced with the actual company name
+
+- X and Y are the 1-2 most specific infrastructure systems or services from the research
+
+- Keep all **bold markers** exactly as shown — do not add or remove any
+
+- Keep the proof point stats exactly as written — do not modify numbers or phrasing
+
 OUTPUT FORMAT
-Write your response in exactly two labeled sections, in this order:
+
+Write your response in exactly three labeled sections, in this order:
 
 <EMAIL>
 [the full cold email exactly as you would have written it — with **bold markers** as normal]
 </EMAIL>
+
 <LINKEDIN>
 [the LinkedIn connection request message — plain text only, no bold markers, under 280 characters]
 </LINKEDIN>
 
-Do not write anything outside these two tags.
+<LINKEDIN_DM>
+[the post-connection DM — follow Part C template exactly, with **bold markers** on the stat phrases]
+</LINKEDIN_DM>
+
+Do not write anything outside these three tags.
 
 Here is the research on the company's infrastructure:
 ${companyResearch}
@@ -322,6 +377,42 @@ export interface DiscoveryPlatform {
   searchUrl: string;
   instructions: string;
 }
+
+/** Shared constants referenced across all discovery platform prompt entries */
+const DISCOVERY = {
+  PAGES: 5,
+  DATE_DAYS: 21,
+
+  /** Negative clearance keywords — appended to Google search queries */
+  NEG_CLEARANCE: `-"security clearance" -"TS/SCI" -"top secret" -"secret clearance"`,
+
+  /** Negative auth keywords — appended to Google search queries */
+  NEG_AUTH: `-"must be authorized to work" -"work authorization required" -"citizens only" -"nationals only" -"residents only"`,
+
+  /** Role keywords reused across search queries */
+  ROLES: `"devops engineer" OR "platform engineer" OR "cloud engineer" OR "site reliability engineer" OR "SRE"`,
+
+  /** Stack keywords reused across search queries */
+  STACK: `"kubernetes" OR "gcp" OR "aws" OR "azure" OR "terraform"`,
+
+  /** Contract type keywords */
+  CONTRACT: `contract OR contractor OR "1099" OR "fixed-term" OR "freelance"`,
+
+  /** Bot challenge handling — used in all direct Indeed entries */
+  CAPTCHA_NOTE: `Note: If you encounter a CAPTCHA, robot check, or unusual activity page at any point: wait 15 seconds, refresh once, then continue. If it persists, collect whatever results you already have from this site and stop.`,
+
+  /** Contract priority note — used in all entries */
+  CONTRACT_PRIORITY: `Run contract/contractor searches FIRST — these roles are typically more accessible to international and remote candidates. Then run the general remote searches.`,
+
+  /** Standard collection instruction */
+  COLLECT: `For each matching posting: click into it, read the full description, and collect the company name, full job posting URL, company website or profile URL, and complete job description text.`,
+
+  /** Standard skip instruction */
+  SKIP: `Skip any posting that: requires a security clearance (mentions "security clearance", "TS/SCI", "top secret", "secret clearance"), or has no remote option.`,
+
+  /** Standard date instruction */
+  DATE: `Date posted: within the last 21 days — if the date is not visible, include the listing anyway.`,
+} as const;
 
 export const PLATFORMS: DiscoveryPlatform[] = [
   {
@@ -345,6 +436,363 @@ export const PLATFORMS: DiscoveryPlatform[] = [
   - Collect the full job description and company URL
     `,
   },
+  // ── Google site:indeed.com (one per country) ────────────────────────────
+
+  {
+    name: "Google site:indeed.com - Worldwide remote",
+    searchUrl: "https://www.google.com",
+    instructions: `
+${DISCOVERY.CONTRACT_PRIORITY}
+
+── CONTRACT + REMOTE SEARCHES (run these first) ─────────────────────────────
+
+1. site:indeed.com (${DISCOVERY.ROLES}) (${DISCOVERY.CONTRACT}) ("worldwide remote" OR "work from anywhere" OR "remote anywhere" OR "global remote" OR "location independent") (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} ${DISCOVERY.NEG_AUTH}
+
+2. site:indeed.com (${DISCOVERY.ROLES}) (${DISCOVERY.CONTRACT}) "remote" ("worldwide remote" OR "work from anywhere" OR "fully remote" OR "remote worldwide") (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} -"US only" -"must be authorized"
+
+── REMOTE SEARCHES (run these after) ────────────────────────────────────────
+
+3. site:indeed.com (${DISCOVERY.ROLES}) ("worldwide remote" OR "work from anywhere" OR "remote anywhere" OR "global remote" OR "location independent") (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} ${DISCOVERY.NEG_AUTH}
+
+4. site:indeed.com (${DISCOVERY.ROLES}) ("fully remote" OR "remote worldwide" OR "anywhere in the world") (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} -"US only" -"must be authorized"
+
+── RULES ─────────────────────────────────────────────────────────────────────
+- Navigate up to ${DISCOVERY.PAGES} pages of Google results per search
+- ${DISCOVERY.DATE}
+- ${DISCOVERY.SKIP}
+- ${DISCOVERY.COLLECT}
+    `,
+  },
+
+  {
+    name: "Google site:indeed.com - UAE remote",
+    searchUrl: "https://www.google.com",
+    instructions: `
+${DISCOVERY.CONTRACT_PRIORITY}
+
+── CONTRACT + REMOTE SEARCHES (run these first) ─────────────────────────────
+
+1. (site:indeed.com OR site:ae.indeed.com) (UAE OR "United Arab Emirates" OR Dubai OR "Abu Dhabi") (${DISCOVERY.ROLES}) (${DISCOVERY.CONTRACT}) "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} -"UAE nationals only"
+
+2. (site:indeed.com OR site:ae.indeed.com) (UAE OR Dubai) (${DISCOVERY.ROLES}) (${DISCOVERY.CONTRACT}) ("visa sponsorship" OR "work permit" OR "relocation") (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE}
+
+── REMOTE SEARCHES (run these after) ────────────────────────────────────────
+
+3. (site:indeed.com OR site:ae.indeed.com) (UAE OR "United Arab Emirates" OR Dubai OR "Abu Dhabi") (${DISCOVERY.ROLES}) "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} -"UAE nationals only"
+
+4. (site:indeed.com OR site:ae.indeed.com) UAE (${DISCOVERY.ROLES}) ("visa sponsorship" OR "work permit" OR "relocation") "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE}
+
+── RULES ─────────────────────────────────────────────────────────────────────
+- Navigate up to ${DISCOVERY.PAGES} pages of Google results per search
+- ${DISCOVERY.DATE}
+- ${DISCOVERY.SKIP}
+- Also skip roles that restrict to UAE nationals only without sponsorship
+- ${DISCOVERY.COLLECT}
+    `,
+  },
+
+  {
+    name: "Google site:indeed.com - Netherlands remote",
+    searchUrl: "https://www.google.com",
+    instructions: `
+${DISCOVERY.CONTRACT_PRIORITY}
+
+── CONTRACT + REMOTE SEARCHES (run these first) ─────────────────────────────
+
+1. (site:indeed.com OR site:nl.indeed.com) (Netherlands OR Amsterdam OR Rotterdam) (${DISCOVERY.ROLES}) (${DISCOVERY.CONTRACT}) "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} -"EU citizens only" -"must have EU work permit"
+
+2. (site:indeed.com OR site:nl.indeed.com) Netherlands (${DISCOVERY.ROLES}) (${DISCOVERY.CONTRACT}) ("visa sponsorship" OR "work permit" OR "relocation" OR "highly skilled migrant" OR "HSM") (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE}
+
+── REMOTE SEARCHES (run these after) ────────────────────────────────────────
+
+3. (site:indeed.com OR site:nl.indeed.com) (Netherlands OR Amsterdam OR Rotterdam) (${DISCOVERY.ROLES}) "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} -"EU citizens only" -"must have EU work permit"
+
+4. (site:indeed.com OR site:nl.indeed.com) Netherlands (${DISCOVERY.ROLES}) ("visa sponsorship" OR "highly skilled migrant" OR "HSM" OR "relocation") "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE}
+
+── RULES ─────────────────────────────────────────────────────────────────────
+- Navigate up to ${DISCOVERY.PAGES} pages of Google results per search
+- ${DISCOVERY.DATE}
+- ${DISCOVERY.SKIP}
+- Also skip roles that restrict to EU citizens only without offering a visa or work permit
+- ${DISCOVERY.COLLECT}
+    `,
+  },
+
+  {
+    name: "Google site:indeed.com - Canada remote",
+    searchUrl: "https://www.google.com",
+    instructions: `
+${DISCOVERY.CONTRACT_PRIORITY}
+
+── CONTRACT + REMOTE SEARCHES (run these first) ─────────────────────────────
+
+1. (site:indeed.com OR site:ca.indeed.com) Canada (${DISCOVERY.ROLES}) (${DISCOVERY.CONTRACT}) "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} -"Canadian citizens only" -"permanent residents only"
+
+2. (site:indeed.com OR site:ca.indeed.com) Canada (${DISCOVERY.ROLES}) (${DISCOVERY.CONTRACT}) ("visa sponsorship" OR "work permit" OR "LMIA" OR "relocation") (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE}
+
+── REMOTE SEARCHES (run these after) ────────────────────────────────────────
+
+3. (site:indeed.com OR site:ca.indeed.com) Canada (${DISCOVERY.ROLES}) "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} -"Canadian citizens only" -"permanent residents only"
+
+4. (site:indeed.com OR site:ca.indeed.com) Canada (${DISCOVERY.ROLES}) ("visa sponsorship" OR "LMIA" OR "work permit" OR "relocation") "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE}
+
+── RULES ─────────────────────────────────────────────────────────────────────
+- Navigate up to ${DISCOVERY.PAGES} pages of Google results per search
+- ${DISCOVERY.DATE}
+- ${DISCOVERY.SKIP}
+- Also skip roles that restrict to Canadian citizens or permanent residents only without offering sponsorship
+- ${DISCOVERY.COLLECT}
+    `,
+  },
+
+  {
+    name: "Google site:indeed.com - Saudi Arabia remote",
+    searchUrl: "https://www.google.com",
+    instructions: `
+${DISCOVERY.CONTRACT_PRIORITY}
+
+── CONTRACT + REMOTE SEARCHES (run these first) ─────────────────────────────
+
+1. (site:indeed.com OR site:sa.indeed.com) ("Saudi Arabia" OR Riyadh OR Jeddah) (${DISCOVERY.ROLES}) (${DISCOVERY.CONTRACT}) "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} -"Saudi nationals only"
+
+2. (site:indeed.com OR site:sa.indeed.com) "Saudi Arabia" (${DISCOVERY.ROLES}) (${DISCOVERY.CONTRACT}) ("visa sponsorship" OR "iqama" OR "work permit" OR "relocation") (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE}
+
+── REMOTE SEARCHES (run these after) ────────────────────────────────────────
+
+3. (site:indeed.com OR site:sa.indeed.com) ("Saudi Arabia" OR Riyadh OR Jeddah) (${DISCOVERY.ROLES}) "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE} -"Saudi nationals only"
+
+4. (site:indeed.com OR site:sa.indeed.com) "Saudi Arabia" (${DISCOVERY.ROLES}) ("visa sponsorship" OR "iqama" OR "work permit" OR "relocation") "remote" (${DISCOVERY.STACK}) ${DISCOVERY.NEG_CLEARANCE}
+
+── RULES ─────────────────────────────────────────────────────────────────────
+- Navigate up to ${DISCOVERY.PAGES} pages of Google results per search
+- ${DISCOVERY.DATE}
+- ${DISCOVERY.SKIP}
+- Also skip roles that restrict to Saudi nationals only without offering sponsorship
+- ${DISCOVERY.COLLECT}
+    `,
+  },
+
+  // ── Direct Indeed searches (one per country) ────────────────────────────
+
+  {
+    name: "Indeed direct - Worldwide remote",
+    searchUrl: "https://www.indeed.com",
+    instructions: `
+Go to https://www.indeed.com
+${DISCOVERY.CAPTCHA_NOTE}
+${DISCOVERY.CONTRACT_PRIORITY}
+
+── CONTRACT SEARCHES (run first) ────────────────────────────────────────────
+
+Search 1:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" OR "site reliability engineer" "work from anywhere" OR "worldwide remote" OR "global remote" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Contract
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+Search 2:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" OR "site reliability engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Contract
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+── REMOTE SEARCHES (run after) ──────────────────────────────────────────────
+
+Search 3:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" "work from anywhere" OR "worldwide remote" OR "global remote" ${DISCOVERY.NEG_CLEARANCE} -"must be authorized" -"US only"
+- Location field: Remote
+- Job type filter: Any
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+Search 4:
+- Search bar: site reliability engineer OR "SRE" "work from anywhere" OR "worldwide remote" ${DISCOVERY.NEG_CLEARANCE} -"must be authorized" -"US only"
+- Location field: Remote
+- Job type filter: Any
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+── RULES ─────────────────────────────────────────────────────────────────────
+- Navigate up to ${DISCOVERY.PAGES} pages per search
+- ${DISCOVERY.SKIP}
+- Also skip roles that require US work authorization or restrict to US citizens
+- ${DISCOVERY.COLLECT}
+    `,
+  },
+
+  {
+    name: "Indeed direct - UAE remote",
+    searchUrl: "https://ae.indeed.com",
+    instructions: `
+Go to https://ae.indeed.com
+${DISCOVERY.CAPTCHA_NOTE}
+${DISCOVERY.CONTRACT_PRIORITY}
+
+── CONTRACT SEARCHES (run first) ────────────────────────────────────────────
+
+Search 1:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Contract
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+Search 2:
+- Search bar: site reliability engineer OR "SRE" OR "infrastructure engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Contract
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+── REMOTE SEARCHES (run after) ──────────────────────────────────────────────
+
+Search 3:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Any
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+Search 4:
+- Search bar: site reliability engineer OR "SRE" OR "infrastructure engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Any
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+── RULES ─────────────────────────────────────────────────────────────────────
+- Navigate up to ${DISCOVERY.PAGES} pages per search
+- ${DISCOVERY.SKIP}
+- Also skip roles that restrict to UAE nationals only without sponsorship
+- ${DISCOVERY.COLLECT}
+    `,
+  },
+
+  {
+    name: "Indeed direct - Netherlands remote",
+    searchUrl: "https://nl.indeed.com",
+    instructions: `
+Go to https://nl.indeed.com
+${DISCOVERY.CAPTCHA_NOTE}
+${DISCOVERY.CONTRACT_PRIORITY}
+
+── CONTRACT SEARCHES (run first) ────────────────────────────────────────────
+
+Search 1:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Contract
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+Search 2:
+- Search bar: site reliability engineer OR "SRE" OR "infrastructure engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Contract
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+── REMOTE SEARCHES (run after) ──────────────────────────────────────────────
+
+Search 3:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Any
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+Search 4:
+- Search bar: site reliability engineer OR "SRE" OR "infrastructure engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Any
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+── RULES ─────────────────────────────────────────────────────────────────────
+- Navigate up to ${DISCOVERY.PAGES} pages per search
+- ${DISCOVERY.SKIP}
+- Also skip roles that restrict to EU citizens only without offering a visa or work permit
+- ${DISCOVERY.COLLECT}
+    `,
+  },
+
+  {
+    name: "Indeed direct - Canada remote",
+    searchUrl: "https://ca.indeed.com",
+    instructions: `
+Go to https://ca.indeed.com
+${DISCOVERY.CAPTCHA_NOTE}
+${DISCOVERY.CONTRACT_PRIORITY}
+
+── CONTRACT SEARCHES (run first) ────────────────────────────────────────────
+
+Search 1:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Contract
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+Search 2:
+- Search bar: site reliability engineer OR "SRE" OR "infrastructure engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Contract
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+── REMOTE SEARCHES (run after) ──────────────────────────────────────────────
+
+Search 3:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Any
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+Search 4:
+- Search bar: site reliability engineer OR "SRE" OR "infrastructure engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Any
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+── RULES ─────────────────────────────────────────────────────────────────────
+- Navigate up to ${DISCOVERY.PAGES} pages per search
+- ${DISCOVERY.SKIP}
+- Also skip roles that restrict to Canadian citizens or permanent residents without offering sponsorship
+- ${DISCOVERY.COLLECT}
+    `,
+  },
+
+  {
+    name: "Indeed direct - Saudi Arabia remote",
+    searchUrl: "https://sa.indeed.com",
+    instructions: `
+Go to https://sa.indeed.com
+${DISCOVERY.CAPTCHA_NOTE}
+${DISCOVERY.CONTRACT_PRIORITY}
+
+── CONTRACT SEARCHES (run first) ────────────────────────────────────────────
+
+Search 1:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Contract
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+Search 2:
+- Search bar: site reliability engineer OR "SRE" OR "infrastructure engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Contract
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+── REMOTE SEARCHES (run after) ──────────────────────────────────────────────
+
+Search 3:
+- Search bar: devops engineer OR "platform engineer" OR "cloud engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Any
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+Search 4:
+- Search bar: site reliability engineer OR "SRE" OR "infrastructure engineer" ${DISCOVERY.NEG_CLEARANCE}
+- Location field: Remote
+- Job type filter: Any
+- Date filter: Last ${DISCOVERY.DATE_DAYS} days
+
+── RULES ─────────────────────────────────────────────────────────────────────
+- Navigate up to ${DISCOVERY.PAGES} pages per search
+- ${DISCOVERY.SKIP}
+- Also skip roles that restrict to Saudi nationals only without offering sponsorship or iqama
+- ${DISCOVERY.COLLECT}
+    `,
+  },
 ];
 
 export const DISCOVERY_PROMPT = (platform: DiscoveryPlatform): string => `
@@ -361,8 +809,7 @@ Cloud/Infrastructure Engineer roles matching ALL of these criteria:
 1. Listed as Remote — include any role tagged Remote or offering remote work.
    Exclude roles which explicitly state "In-office only", OR "No remote";
 2. Involves cloud infrastructure, containers, Kubernetes, DevOps, or platform engineering
-3. Salary of over $100,000+ per year if shown — if salary is NOT shown, still include the listing
-4. Posted within the last 21 days — if date is not visible, include the listing anyway
+3. Posted within the last 21 days — if date is not visible, include the listing anyway
 
 For EACH matching job:
 1. Note the company name and the full job posting URL
@@ -386,7 +833,7 @@ url (not "company_url"), job_ad (not "description").
 
 Rules:
 - Skip roles posted more than 21 days ago if the date is clearly visible
-- Aim to return 50 - 100 matching jobs.
+- Aim to return 50 - 200 matching jobs.
 - Return [] if no matching jobs are found
 - Do NOT wrap the JSON in markdown fences or add any explanation
 `;
@@ -506,8 +953,8 @@ export function OUTREACH_PROMPT(
   jobUrl?: string,
 ): string {
   return `Find technical decision makers, the recruiter for this role, and HR contact details at ${companyName}.
-${jobTitle ? `\nTarget role: ${jobTitle}` : ''}
-${jobUrl ? `Job posting URL: ${jobUrl}` : ''}
+${jobTitle ? `\nTarget role: ${jobTitle}` : ""}
+${jobUrl ? `Job posting URL: ${jobUrl}` : ""}
 
 ── PHASE 1: Find decision makers (max 3 steps) ──────────────────────────────
 1. Visit ${companyUrl}/about and ${companyUrl}/team — read the page
@@ -534,9 +981,13 @@ Do NOT visit Twitter, Dev.to, Medium, or LinkedIn.
 Do NOT run more than one search per person.
 
 ── PHASE 3: Find recruiter and HR contacts (max 3 steps) ────────────────────
-${jobUrl ? `1. Visit the job posting URL: ${jobUrl}
+${
+  jobUrl
+    ? `1. Visit the job posting URL: ${jobUrl}
    - Look for a recruiter name, "Posted by", "Contact", or email on the page
-   - Note their name, title, and any email shown` : `1. Skip this step (no job URL provided)`}
+   - Note their name, title, and any email shown`
+    : `1. Skip this step (no job URL provided)`
+}
 
 2. Visit ${companyUrl}/careers and ${companyUrl}/contact (try both):
    - Look for email addresses such as hr@, careers@, jobs@, people@, talent@, recruiting@
@@ -549,7 +1000,7 @@ ${jobUrl ? `1. Visit the job posting URL: ${jobUrl}
      · personal_emails: []
 
 3. If no recruiter was found in steps 1-2, do ONE Google search:
-   "${companyName}"${jobTitle ? ` "${jobTitle}"` : ''} recruiter OR "talent acquisition" OR "HR"
+   "${companyName}"${jobTitle ? ` "${jobTitle}"` : ""} recruiter OR "talent acquisition" OR "HR"
    - Read snippets only — do NOT click through
    - Note any recruiter name or email that appears in the snippets
 
@@ -596,11 +1047,15 @@ Classification rules:
 
 General rules:
 - Only include people or inboxes you found direct evidence for — never guess or invent
-- Prioritise finding the recruiter for ${jobTitle ?? 'the engineering role'} specifically
+- Prioritise finding the recruiter for ${jobTitle ?? "the engineering role"} specifically
 - Return [] if nothing relevant is found`;
 }
 
-export function APPLY_PROMPT(APPLICANT: any, jobUrl: string, coverLetterBody: string): string {
+export function APPLY_PROMPT(
+  APPLICANT: any,
+  jobUrl: string,
+  coverLetterBody: string,
+): string {
   return `
 You are submitting a job application on behalf of ${APPLICANT.firstName} ${APPLICANT.lastName}.
 

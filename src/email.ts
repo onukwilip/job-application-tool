@@ -7,8 +7,9 @@ const anthropic = new Anthropic({
 });
 
 export interface GeneratedContent {
-  email:    string;
-  linkedIn: string;
+  email:       string;
+  linkedIn:    string;
+  linkedInDm:  string;   // ← new: post-connection DM
 }
 
 export async function generateColdEmail(
@@ -16,7 +17,7 @@ export async function generateColdEmail(
 ): Promise<GeneratedContent> {
   const message = await anthropic.messages.create({
     model:      'claude-haiku-4-5-20251001',
-    max_tokens: 2500,
+    max_tokens: 3000,    // increased from 2500 to accommodate the third section
     messages: [
       {
         role:    'user',
@@ -30,22 +31,22 @@ export async function generateColdEmail(
 
   const raw = content.text;
 
-  // Extract <EMAIL>...</EMAIL> block
-  const emailMatch    = raw.match(/<EMAIL>([\s\S]*?)<\/EMAIL>/i);
-  // Extract <LINKEDIN>...</LINKEDIN> block
-  const linkedInMatch = raw.match(/<LINKEDIN>([\s\S]*?)<\/LINKEDIN>/i);
+  const emailMatch      = raw.match(/<EMAIL>([\s\S]*?)<\/EMAIL>/i);
+  const linkedInMatch   = raw.match(/<LINKEDIN>([\s\S]*?)<\/LINKEDIN>/i);
+  const linkedInDmMatch = raw.match(/<LINKEDIN_DM>([\s\S]*?)<\/LINKEDIN_DM>/i);   // ← new
 
   if (!emailMatch) {
-    // Haiku didn't use the tags at all — treat whole response as email (safe fallback)
     console.warn('[generateColdEmail] <EMAIL> tag not found — falling back to full response');
     return {
-      email:    applyBold(raw),
-      linkedIn: '',
+      email:      applyBold(raw),
+      linkedIn:   '',
+      linkedInDm: '',   // ← new
     };
   }
 
   return {
-    email:    applyBold(emailMatch[1].trim()),
-    linkedIn: linkedInMatch?.[1]?.trim() ?? '',
+    email:      applyBold(emailMatch[1].trim()),
+    linkedIn:   linkedInMatch?.[1]?.trim()   ?? '',
+    linkedInDm: applyBold(linkedInDmMatch?.[1]?.trim() ?? ''),   // ← new: bold applied
   };
 }

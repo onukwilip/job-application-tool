@@ -7,6 +7,7 @@ import {
   markFailed,
   getSummary,
   updateLinkedInDm,
+  updateLinkedInFollowUp,
   type Company,
 } from "./db.js";
 import { researchCompany } from "./research.js";
@@ -40,10 +41,12 @@ async function processCompany(company: Company): Promise<void> {
     if (!company.cold_email) {
       console.log(`  Generating cold email for ${company.name}...`);
 
-      const { email, linkedIn } = await generateColdEmail(infrastructure); // ← destructure
+      const { email, linkedIn, linkedInDm } =
+        await generateColdEmail(infrastructure); // ← add linkedInDm
 
       updateColdEmail(company.id, email);
-      if (linkedIn) updateLinkedInDm(company.id, linkedIn); // ← new DB write
+      if (linkedIn) updateLinkedInDm(company.id, linkedIn);
+      if (linkedInDm) updateLinkedInFollowUp(company.id, linkedInDm); // ← new
 
       console.log(`  Email saved for ${company.name}`);
     } else {
