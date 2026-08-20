@@ -21,6 +21,14 @@ export interface BuResult {
   sessionId?: number; // present on local path only; undefined on Cloud path
 }
 
+export interface BuAgentOptions {
+  maxSteps?: number;
+  stepTimeout?: number;
+  maxFailures?: number;
+  useVision?: boolean;
+  maxHistoryItems?: number;
+}
+
 // ── Cloud client (lazy init) ───────────────────────────────────────────────────
 
 let _cloudClient: BrowserUse | null = null;
@@ -36,7 +44,11 @@ function getCloudClient(): BrowserUse {
 
 let _localQueue: Promise<void> = Promise.resolve();
 
-async function _runLocal(task: string, model: string): Promise<BuResult> {
+async function _runLocal(
+  task: string,
+  model: string,
+  agentOptions?: BuAgentOptions,
+): Promise<BuResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -45,7 +57,19 @@ async function _runLocal(task: string, model: string): Promise<BuResult> {
     response = await fetch(`${LOCAL_URL}/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ task, model }),
+      body: JSON.stringify({
+        task,
+        model,
+        ...(agentOptions && {
+          options: {
+            max_steps: agentOptions.maxSteps,
+            step_timeout: agentOptions.stepTimeout,
+            max_failures: agentOptions.maxFailures,
+            use_vision: agentOptions.useVision,
+            max_history_items: agentOptions.maxHistoryItems,
+          },
+        }),
+      }),
       signal: controller.signal,
     });
   } catch (err: any) {
@@ -82,11 +106,11 @@ async function _runLocal(task: string, model: string): Promise<BuResult> {
   };
 }
 
-async function runLocal(task: string, model: string): Promise<BuResult> {
+async function runLocal(task: string, model: string, agentOptions?: BuAgentOptions): Promise<BuResult> {
   return new Promise<BuResult>((resolve, reject) => {
     _localQueue = _localQueue.then(async () => {
       try {
-        resolve(await _runLocal(task, model));
+        resolve(await _runLocal(task, model, agentOptions));
       } catch (err) {
         reject(err);
       }
@@ -119,10 +143,10 @@ async function runCloud(task: string, model: BuModel): Promise<BuResult> {
  */
 export async function bu(
   task: string,
-  options: { model?: string; localModel?: string } = {},
+  options: { model?: string; localModel?: string, agentOptions?: BuAgentOptions;} = {},
 ): Promise<BuResult> {
   if (USE_LOCAL) {
-    return await runLocal(task, options.localModel ?? LOCAL_MODEL);
+    return await runLocal(task, options.localModel ?? LOCAL_MODEL, options.agentOptions);
   } else {
     return await runCloud(task, (options.model ?? CLOUD_MODEL) as BuModel);
   }

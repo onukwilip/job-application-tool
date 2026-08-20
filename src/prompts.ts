@@ -376,6 +376,7 @@ export interface DiscoveryPlatform {
   name: string;
   searchUrl: string;
   instructions: string;
+  search: boolean;   // ← true = include in discovery run, false = skip
 }
 
 /** Shared constants referenced across all discovery platform prompt entries */
@@ -418,6 +419,7 @@ export const PLATFORMS: DiscoveryPlatform[] = [
   {
     name: "Google multi-platform search",
     searchUrl: "https://www.google.com",
+    search: true,
     instructions: `
   Run EACH of these Google searches one at a time and collect results from each:
 
@@ -441,6 +443,7 @@ export const PLATFORMS: DiscoveryPlatform[] = [
   {
     name: "Google site:indeed.com - Worldwide remote",
     searchUrl: "https://www.google.com",
+    search: false,
     instructions: `
 ${DISCOVERY.CONTRACT_PRIORITY}
 
@@ -467,6 +470,7 @@ ${DISCOVERY.CONTRACT_PRIORITY}
   {
     name: "Google site:indeed.com - UAE remote",
     searchUrl: "https://www.google.com",
+    search: false,
     instructions: `
 ${DISCOVERY.CONTRACT_PRIORITY}
 
@@ -494,6 +498,7 @@ ${DISCOVERY.CONTRACT_PRIORITY}
   {
     name: "Google site:indeed.com - Netherlands remote",
     searchUrl: "https://www.google.com",
+    search: false,
     instructions: `
 ${DISCOVERY.CONTRACT_PRIORITY}
 
@@ -521,6 +526,7 @@ ${DISCOVERY.CONTRACT_PRIORITY}
   {
     name: "Google site:indeed.com - Canada remote",
     searchUrl: "https://www.google.com",
+    search: false,
     instructions: `
 ${DISCOVERY.CONTRACT_PRIORITY}
 
@@ -548,6 +554,7 @@ ${DISCOVERY.CONTRACT_PRIORITY}
   {
     name: "Google site:indeed.com - Saudi Arabia remote",
     searchUrl: "https://www.google.com",
+    search: false,
     instructions: `
 ${DISCOVERY.CONTRACT_PRIORITY}
 
@@ -577,6 +584,7 @@ ${DISCOVERY.CONTRACT_PRIORITY}
   {
     name: "Indeed direct - Worldwide remote",
     searchUrl: "https://www.indeed.com",
+    search: false,
     instructions: `
 Go to https://www.indeed.com
 ${DISCOVERY.CAPTCHA_NOTE}
@@ -621,6 +629,7 @@ Search 4:
   {
     name: "Indeed direct - UAE remote",
     searchUrl: "https://ae.indeed.com",
+    search: false,
     instructions: `
 Go to https://ae.indeed.com
 ${DISCOVERY.CAPTCHA_NOTE}
@@ -665,6 +674,7 @@ Search 4:
   {
     name: "Indeed direct - Netherlands remote",
     searchUrl: "https://nl.indeed.com",
+    search: false,
     instructions: `
 Go to https://nl.indeed.com
 ${DISCOVERY.CAPTCHA_NOTE}
@@ -709,6 +719,7 @@ Search 4:
   {
     name: "Indeed direct - Canada remote",
     searchUrl: "https://ca.indeed.com",
+    search: false,
     instructions: `
 Go to https://ca.indeed.com
 ${DISCOVERY.CAPTCHA_NOTE}
@@ -753,6 +764,7 @@ Search 4:
   {
     name: "Indeed direct - Saudi Arabia remote",
     searchUrl: "https://sa.indeed.com",
+    search: false,
     instructions: `
 Go to https://sa.indeed.com
 ${DISCOVERY.CAPTCHA_NOTE}
