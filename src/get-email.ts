@@ -2,7 +2,14 @@ import { bu } from "./bu-adapter.js";
 import "dotenv/config";
 import pLimit from "p-limit";
 import Anthropic from "@anthropic-ai/sdk";
-import { Company, DecisionMaker, getCompaniesForOutreach, getSummary, markOutreachFailed, updateOutreach } from "./db.js";
+import {
+  Company,
+  DecisionMaker,
+  getCompaniesForOutreach,
+  getSummary,
+  markOutreachFailed,
+  updateOutreach,
+} from "./db.js";
 import { extractDomain } from "./utils.js";
 import { OUTREACH_PROMPT } from "./prompts.js";
 
@@ -92,7 +99,9 @@ interface ParsedPerson {
 
 function toStringArray(value: unknown): string[] {
   if (Array.isArray(value)) {
-    return value.filter((v): v is string => typeof v === "string" && v.trim().length > 0);
+    return value.filter(
+      (v): v is string => typeof v === "string" && v.trim().length > 0,
+    );
   }
   if (typeof value === "string" && value.trim().length > 0) return [value];
   return [];
@@ -394,12 +403,24 @@ async function getCompanyDecisionMakers(company: Company): Promise<void> {
 
   try {
     // Step 1: Browser Use finds decision makers
-    const prompt = OUTREACH_PROMPT(company.name, company.urls, `${company.job_ad.slice(0, 200)}...`, company.job_url ?? undefined);
-    const { output, sessionId } = await bu(prompt);
+    const prompt = OUTREACH_PROMPT(
+      company.name,
+      company.urls,
+      `${company.job_ad.slice(0, 200)}...`,
+      company.job_url ?? undefined,
+    );
+    const { output, sessionId } = await bu(prompt, {
+      localModel: "glm-4.7",
+      agentOptions: {
+        maxSteps: 40,
+        stepTimeout: 90,
+        maxFailures: 5,
+        taskTimeoutSeconds: 2000,
+      },
+    });
 
-    const raw = typeof output === 'string'
-      ? output
-      : JSON.stringify(output ?? []);
+    const raw =
+      typeof output === "string" ? output : JSON.stringify(output ?? []);
 
     // Step 2: Parse + normalize
     const people = await parsePeople(raw, company.name);
@@ -407,13 +428,19 @@ async function getCompanyDecisionMakers(company: Company): Promise<void> {
 
     // Step 3: Enrich work emails for anyone missing one
     const enrichedParsed = await Promise.all(
-      people.map(person => furtherGetEmail(person, domain))
+      people.map((person) => furtherGetEmail(person, domain)),
     );
 
-    enrichedParsed.forEach(p => {
-      const workStatus     = p.workEmails.length > 0 ? p.workEmails.join(', ') : 'no work email';
-      const personalStatus = p.personalEmails.length > 0 ? p.personalEmails.join(', ') : 'no personal email';
-      console.log(`  - ${p.title}: ${p.name} | work: ${workStatus} | personal: ${personalStatus} | ${p.linkedin ?? 'no LinkedIn'}`);
+    enrichedParsed.forEach((p) => {
+      const workStatus =
+        p.workEmails.length > 0 ? p.workEmails.join(", ") : "no work email";
+      const personalStatus =
+        p.personalEmails.length > 0
+          ? p.personalEmails.join(", ")
+          : "no personal email";
+      console.log(
+        `  - ${p.title}: ${p.name} | work: ${workStatus} | personal: ${personalStatus} | ${p.linkedin ?? "no LinkedIn"}`,
+      );
     });
 
     // Step 4: Merge work + personal into the flat DecisionMaker.emails shape and store
@@ -422,36 +449,44 @@ async function getCompanyDecisionMakers(company: Company): Promise<void> {
     console.log(`  [DONE] ${company.name}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    markOutreachFailed (company.id, message);
+    markOutreachFailed(company.id, message);
     console.error(`  [FAILED] ${company.name}: ${message}`);
   }
 }
 
 async function main() {
-  console.log('Starting outreach email discovery...');
-  console.log(`BU: ${process.env.BROWSER_USE_LOCAL === 'true' ? 'local' : 'cloud'} | Concurrency: ${CONCURRENCY}`);
-  console.log('Enrichment providers:', [
-    HUNTER_KEY   && 'Hunter.io',
-    ANYMAIL_KEY  && 'Anymail Finder',
-  ].filter(Boolean).join(' → ') || 'None configured (BU only)');
+  console.log("Starting outreach email discovery...");
+  console.log(
+    `BU: ${process.env.BROWSER_USE_LOCAL === "true" ? "local" : "cloud"} | Concurrency: ${CONCURRENCY}`,
+  );
+  console.log(
+    "Enrichment providers:",
+    [HUNTER_KEY && "Hunter.io", ANYMAIL_KEY && "Anymail Finder"]
+      .filter(Boolean)
+      .join(" → ") || "None configured (BU only)",
+  );
 
   const allCompanies = getCompaniesForOutreach();
-  const companies    = OUTREACH_LIMIT
+  const companies = OUTREACH_LIMIT
     ? allCompanies.slice(0, OUTREACH_LIMIT)
     : allCompanies;
 
-  console.log(`Eligible companies: ${allCompanies.length} | Processing this run: ${companies.length}`);
+  console.log(
+    `Eligible companies: ${allCompanies.length} | Processing this run: ${companies.length}`,
+  );
 
   if (companies.length === 0) {
-    console.log('No companies ready. Run "npm run start" first to generate cold emails.');
+    console.log(
+      'No companies ready. Run "npm run start" first to generate cold emails.',
+    );
     return;
   }
 
   const limit = pLimit(CONCURRENCY);
-  const tasks = companies.map(c => limit(() => getCompanyDecisionMakers(c)));
+  const tasks = companies.map((c) => limit(() => getCompanyDecisionMakers(c)));
   await Promise.allSettled(tasks);
 
-  console.log('\n=== Summary ===');
+  console.log("\n=== Summary ===");
   console.table(getSummary());
 }
 

@@ -13,7 +13,7 @@ export interface GeneratedContent {
 }
 
 export async function generateColdEmail(
-  companyResearch: string
+  companyResearch: string, jobDescription: string
 ): Promise<GeneratedContent> {
   const message = await anthropic.messages.create({
     model:      'claude-haiku-4-5-20251001',
@@ -21,7 +21,7 @@ export async function generateColdEmail(
     messages: [
       {
         role:    'user',
-        content: EMAIL_GENERATION_PROMPT(companyResearch),
+        content: EMAIL_GENERATION_PROMPT(companyResearch, jobDescription),
       },
     ],
   });

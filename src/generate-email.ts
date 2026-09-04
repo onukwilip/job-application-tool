@@ -41,8 +41,10 @@ async function processCompany(company: Company): Promise<void> {
     if (!company.cold_email) {
       console.log(`  Generating cold email for ${company.name}...`);
 
-      const { email, linkedIn, linkedInDm } =
-        await generateColdEmail(infrastructure); // ← add linkedInDm
+      const { email, linkedIn, linkedInDm } = await generateColdEmail(
+        infrastructure,
+        company.job_ad,
+      ); // ← add linkedInDm
 
       updateColdEmail(company.id, email);
       if (linkedIn) updateLinkedInDm(company.id, linkedIn);

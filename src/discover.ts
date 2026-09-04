@@ -193,7 +193,14 @@ async function discoverFromPlatform(
 
   try {
     const { output, sessionId } = await bu(DISCOVERY_PROMPT(platform), {
-      agentOptions: { maxSteps: 15, stepTimeout: 90, maxFailures: 5, maxHistoryItems: 5 },
+      localModel: "glm-4.7",
+      agentOptions: {
+        maxSteps: 160,
+        stepTimeout: 120,
+        maxFailures: 5,
+        maxHistoryItems: 6,
+        taskTimeoutSeconds: 3900,
+      },
     });
 
     const raw =

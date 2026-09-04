@@ -7,5 +7,8 @@ export async function researchCompany(
   jobAd: string,
 ): Promise<BuResult> {
   const task = RESEARCH_PROMPT(name, urls, jobAd);
-  return await bu(task);
+  return await bu(task, {
+    localModel: "glm-4.7",
+    agentOptions: { maxSteps: 25, taskTimeoutSeconds: 1800, stepTimeout: 120 },
+  });
 }
