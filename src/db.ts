@@ -20,6 +20,8 @@ export interface Company {
   error: string | null;
   research_bu_session_id: number | null;
   outreach_bu_session_id: number | null;
+  linkedin_dm:            string | null;
+  linkedin_follow_up:     string | null;
   created_at: string;
   updated_at: string;
 }
@@ -335,6 +337,24 @@ export function getOpenedLinkedinUrls(): Set<string> {
 /** Records a LinkedIn URL as opened. Silently skips if already recorded. */
 export function recordLinkedinOpen(url: string): void {
   db.prepare(`INSERT OR IGNORE INTO linkedin_opens (url) VALUES (?)`).run(url);
+}
+
+/** Updates the LinkedIn DM for a company */
+export function updateLinkedInDm(id: number, dm: string): void {
+  db.prepare(`
+    UPDATE companies
+    SET linkedin_dm = ?
+    WHERE id = ?
+  `).run(dm, id);
+}
+
+/** Updates the post-connection LinkedIn DM for a company */
+export function updateLinkedInFollowUp(id: number, dm: string): void {
+  db.prepare(`
+    UPDATE companies
+    SET linkedin_follow_up = ?
+    WHERE id = ?
+  `).run(dm, id);
 }
 
 export default db;

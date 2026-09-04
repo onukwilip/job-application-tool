@@ -17,8 +17,8 @@
     "send-email": "tsx src/send-email.ts",
     "followup": "tsx src/followup.ts",
     "apply": "tsx src/apply.ts",
-    "run": "BROWSER_USE_LOCAL=true npm run gen-email && BROWSER_USE_LOCAL=false npm run get-email && npm run send-email",
-    "run-no-email": "BROWSER_USE_LOCAL=true npm run gen-email && BROWSER_USE_LOCAL=false npm run get-email",
+    "run": "BROWSER_USE_LOCAL=true npm run gen-email && BROWSER_USE_LOCAL=true npm run get-email && npm run send-email",
+    "run-no-email": "BROWSER_USE_LOCAL=true npm run gen-email && BROWSER_USE_LOCAL=true npm run get-email",
     "list": "tsx src/list-contacts.ts",
     "open-linkedin": "tsx src/open-linkedin.ts"
   },
@@ -34,6 +34,7 @@
     "node-capsolver": "^1.2.0",
     "nodemailer": "^9.0.3",
     "p-limit": "^7.3.0",
+    "undici": "^8.10.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

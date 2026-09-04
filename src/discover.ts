@@ -192,14 +192,19 @@ async function discoverFromPlatform(
   console.log(`\n[START] Searching ${platform.name}...`);
 
   try {
-    const { output } = await bu(DISCOVERY_PROMPT(platform), {
-      model: MODEL,
+    const { output, sessionId } = await bu(DISCOVERY_PROMPT(platform), {
+      localModel: "glm-4.7",
+      agentOptions: {
+        maxSteps: 160,
+        stepTimeout: 120,
+        maxFailures: 5,
+        maxHistoryItems: 6,
+        taskTimeoutSeconds: 3900,
+      },
     });
 
     const raw =
-      typeof output === "string"
-        ? output
-        : JSON.stringify(output ?? []);
+      typeof output === "string" ? output : JSON.stringify(output ?? []);
 
     const jobs = await parseJobs(raw, platform.name); // parseJobs is async
     console.log(`  [${platform.name}] Found ${jobs.length} matching jobs`);
@@ -236,13 +241,25 @@ async function discoverFromPlatform(
 
 async function main() {
   console.log("Starting job discovery...");
-  console.log(`Platforms: ${PLATFORMS.map((p) => p.name).join(", ")}`);
+
+  const activePlatforms = PLATFORMS.filter((p) => p.search); // ← filter here
+  console.log(
+    `Platforms (active): ${activePlatforms.map((p) => p.name).join(", ")}`,
+  );
+  console.log(
+    `Skipped: ${
+      PLATFORMS.filter((p) => !p.search)
+        .map((p) => p.name)
+        .join(", ") || "none"
+    }`,
+  );
   console.log(`Concurrency: ${CONCURRENCY} | Model: ${MODEL}`);
 
   const limit = pLimit(CONCURRENCY);
-
-  const tasks = PLATFORMS.map((platform) =>
-    limit(() => discoverFromPlatform(platform)),
+  const tasks = activePlatforms.map(
+    (
+      platform, // ← use activePlatforms
+    ) => limit(() => discoverFromPlatform(platform)),
   );
 
   await Promise.allSettled(tasks);
