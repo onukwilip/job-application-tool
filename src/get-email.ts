@@ -410,7 +410,7 @@ async function getCompanyDecisionMakers(company: Company): Promise<void> {
       company.job_url ?? undefined,
     );
     const { output, sessionId } = await bu(prompt, {
-      localModel: "glm-4.7",
+      localModel: "glm-5.2",
       agentOptions: {
         maxSteps: 40,
         stepTimeout: 90,
